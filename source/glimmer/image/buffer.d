@@ -18,13 +18,13 @@ struct RGBABuffer
   }
 
   /// Get color in buffer by index
-  ref auto opIndex(size_t index)
+  ref auto opIndex(ulong index)
   {
     return data[index];
   }
 
   /// Get color in buffer by row and column
-  ref auto opIndex(size_t row, size_t col)
+  ref auto opIndex(ulong row, ulong col)
   {
     assert(row < height && col < width);
     return data[row * width + col];

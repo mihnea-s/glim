@@ -1,6 +1,7 @@
 module glimmer.image.ppm;
 
 import std.stdio;
+import std.outbuffer;
 
 import glimmer.image.rgba;
 import glimmer.image.buffer;
@@ -29,7 +30,29 @@ class PPMEncoder : BufferEncoder
   /// Encode the buffer to bytes
   ubyte[] encodeToArray(in RGBABuffer buffer)
   {
-    // TODO
-    return [];
+    auto buf = new OutBuffer;
+
+    buf.write(HEADER);
+    buf.write("\n");
+
+    buf.write(buffer.width);
+    buf.write(" ");
+    buf.write(buffer.height);
+    buf.write("\n");
+
+    buf.write(ubyte.max);
+    buf.write("\n");
+
+    foreach (RGBA color; buffer.data)
+    {
+      buf.write(color.red);
+      buf.write(" ");
+      buf.write(color.green);
+      buf.write(" ");
+      buf.write(color.blue);
+      buf.write("\n");
+    }
+
+    return buf.toBytes();
   }
 }
