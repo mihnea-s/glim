@@ -1,0 +1,14 @@
+name "glimmer-example"
+description "Glimmer example"
+
+authors "mihnea"
+copyright "Copyright © 2020, mihnea"
+
+homepage "https://github.com/mihnea-s/glimmer"
+license "Unlicense"
+
+dependency "glimmer" version="*" path=".."
+
+targetType "executable"
+targetPath "../build"
+sourcePaths "."

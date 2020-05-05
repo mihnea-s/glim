@@ -1,0 +1,14 @@
+name "glimmer"
+description "D Raytracer library"
+
+authors "mihnea"
+copyright "Copyright © 2020, mihnea"
+
+homepage "https://github.com/mihnea-s/glimmer"
+license "Unlicense"
+
+targetType "library"
+targetPath "build"
+
+importPaths "./source/"
+sourcePaths "./source/"

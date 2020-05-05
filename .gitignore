@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+build/
+/raytrace
+raytrace.so
+raytrace.dylib
+raytrace.dll
+raytrace.a
+raytrace.lib
+raytrace-test-*
+*.exe
+*.o
+*.obj
+*.lst
