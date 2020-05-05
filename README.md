@@ -1,1 +1,1 @@
-# Glimmer - D Raytracer
+# Glimmer - D Raytracer library
