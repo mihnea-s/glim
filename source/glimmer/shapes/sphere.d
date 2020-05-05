@@ -30,13 +30,13 @@ class Sphere : Shape
   /// Test sphere hit
   bool isHitBy(const ref Ray ray) const @safe nothrow
   {
-    // t*t*dot(B, B) + 2*t*dot(B,A-C) + dot(A-C, A-C) - R*R = 0
+    // t*t*dot(Dir, Dir) + 2*t*dot(Dir, O - C) + dot(O - C, O - C) - R*R = 0
     immutable a = ray.direction.dot(ray.direction);
-    immutable b = ray.direction.dot(ray.origin - _center);
+    immutable b = 2 * ray.direction.dot(ray.origin - _center);
     immutable c = (ray.origin - _center).dot(ray.origin - _center) - pow(_radius, 2);
 
-    immutable delta = pow(b, 2) - 4.0 * a * c;
-    return delta >= 0;
+    immutable discriminant = pow(b, 2) - 4.0 * a * c;
+    return discriminant > 0;
   }
 
   @safe nothrow unittest
