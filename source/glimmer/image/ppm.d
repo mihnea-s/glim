@@ -17,13 +17,13 @@ class PPMEncoder : BufferEncoder
   {
     auto f = File(path, "w");
 
-    f.write(HEADER, "\n");
-    f.write(buffer.width, " ", buffer.height, "\n");
-    f.write(ubyte.max, "\n");
+    f.writef("%s\n", HEADER);
+    f.writef("%d %d\n", buffer.width, buffer.height);
+    f.writef("%d\n", ubyte.max);
 
     foreach (RGBA color; buffer.data)
     {
-      f.write(color.red, " ", color.green, " ", color.blue, "\n");
+      f.writef("%d %d %d\n", color.red, color.green, color.blue);
     }
   }
 
@@ -32,25 +32,13 @@ class PPMEncoder : BufferEncoder
   {
     auto buf = new OutBuffer;
 
-    buf.write(HEADER);
-    buf.write("\n");
-
-    buf.write(buffer.width);
-    buf.write(" ");
-    buf.write(buffer.height);
-    buf.write("\n");
-
-    buf.write(ubyte.max);
-    buf.write("\n");
+    buf.writef("%s\n", HEADER);
+    buf.writef("%d %d\n", buffer.width, buffer.height);
+    buf.writef("%d\n", ubyte.max);
 
     foreach (RGBA color; buffer.data)
     {
-      buf.write(color.red);
-      buf.write(" ");
-      buf.write(color.green);
-      buf.write(" ");
-      buf.write(color.blue);
-      buf.write("\n");
+      buf.writef("%d %d %d\n", color.red, color.green, color.blue);
     }
 
     return buf.toBytes();
