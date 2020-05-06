@@ -1,4 +1,4 @@
-module glimmer.camera;
+module glimmer.camera.camera;
 
 import std.typecons : tuple;
 
@@ -12,25 +12,25 @@ class Camera
 {
   private Vec3 _position;
   private RGBABuffer _buffer;
+  private ulong _samplesPerPx;
 
   private immutable Vec3 _topLeft;
   private immutable Vec3 _horizontal;
   private immutable Vec3 _vertical;
 
   ///
-  this(Vec3 position, ulong width, ulong height)
+  this(Vec3 position, ulong width, ulong height, double fov, ulong samplesPerPx) @safe nothrow
   {
     _position = position;
     _buffer = RGBABuffer.fromWH(width, height);
-
-    immutable fov = 2.0 ^^ 10.0;
+    _samplesPerPx = samplesPerPx;
 
     immutable h = width / fov;
     immutable v = height / fov;
 
-    _topLeft =    Vec3(-h / 2.0,  v / 2.0,  -1.0);
-    _horizontal = Vec3(   h    ,   0.0   ,   0.0);
-    _vertical =   Vec3(  0.0   ,    v    ,   0.0);
+    _topLeft = Vec3(-h / 2.0, v / 2.0, -1.0);
+    _horizontal = Vec3(h, 0.0, 0.0);
+    _vertical = Vec3(0.0, v, 0.0);
   }
 
   private auto rayOf(double u, double v)
@@ -62,11 +62,30 @@ class Camera
     {
       foreach (ref col; 0 .. _buffer.width)
       {
-        auto u = cast(double)(col) / cast(double)(_buffer.width - 1);
-        auto v = cast(double)(row) / cast(double)(_buffer.height - 1);
+        ulong r = 0, g = 0, b = 0, a = 0;
 
-        immutable ray = this.rayOf(u, v);
-        _buffer[row, col] = this.colorOf(world, ray);
+        foreach (i; 0 .. _samplesPerPx)
+        {
+          import std.random : uniform;
+
+          auto u = (col + uniform(0.0, 1.0)) / (_buffer.width - 1.0);
+          auto v = (row + uniform(0.0, 1.0)) / (_buffer.height - 1.0);
+
+          immutable ray = this.rayOf(u, v);
+          immutable color = this.colorOf(world, ray);
+
+          r += color.red;
+          g += color.green;
+          b += color.blue;
+          a += color.alpha;
+        }
+
+        _buffer[row, col] = RGBA( //
+            cast(ubyte)(r / _samplesPerPx), //
+            cast(ubyte)(g / _samplesPerPx), //
+            cast(ubyte)(b / _samplesPerPx), //
+            cast(ubyte)(a / _samplesPerPx), //
+            );
       }
     }
   }
