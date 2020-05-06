@@ -2,6 +2,19 @@ module glimmer.math.ray;
 
 import glimmer.math.vector;
 
+///
+struct Hit
+{
+  ///
+  Vec3 position;
+
+  ///
+  Vec3 normal;
+
+  ///
+  double t;
+}
+
 /// A single ray
 struct Ray
 {
@@ -12,7 +25,7 @@ struct Ray
   /// origin with the given direction
   static Ray originTo(Vec3 dir) @safe nothrow
   {
-    return Ray(Vec3.zero(), dir);
+    return Ray(Vec3.zero, dir);
   }
 
   /// The ray's position at some

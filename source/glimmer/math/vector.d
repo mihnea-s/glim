@@ -37,7 +37,7 @@ struct Vec3
   /// Get a unit vector pointing in same direction
   auto normalized() const @safe
   {
-    immutable len = this.length();
+    immutable len = this.length;
 
     return Vec3( //
         this.x / len, //
@@ -49,13 +49,13 @@ struct Vec3
   @safe nothrow unittest
   {
     immutable a = Vec3(1, 0, 0);
-    assert(a.normalized() == a);
+    assert(a.normalized == a);
 
     immutable b = Vec3(20, 0, 0);
-    assert(b.normalized() == b / 20);
+    assert(b.normalized == b / 20);
 
     immutable c = Vec3(1, 1, 1);
-    assert(c.normalized() == Vec3.same(1.0 / sqrt(3.0)));
+    assert(c.normalized == Vec3.same(1.0 / sqrt(3.0)));
   }
 
   /// Dot product
