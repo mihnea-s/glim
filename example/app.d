@@ -7,28 +7,17 @@ import glimmer.image;
 import glimmer.math;
 import glimmer.camera;
 import glimmer.shapes;
+import glimmer.world;
 
 void main()
 {
-	auto img = RGBABuffer.fromWH(200 * 10, 100 * 10);
-	auto cam = new Camera();
+	auto env = new World;
+	env["shape1"] = new Sphere(Vec3(0, 0, -5), 0.5);
+	env["shape2"] = new Sphere(Vec3(-2, 1, -3), 1.5);
 
-	auto topRight = Vec3(-2, 1, -1);
-	auto horizontal = Vec3(4, 0, 0);
-	auto vertical = Vec3(0, 2, 0);
-
-	foreach (ulong i; 0 .. img.height)
-	{
-		foreach (ulong j; 0 .. img.width)
-		{
-			auto u = cast(double)(i) / img.height;
-			auto v = cast(double)(j) / img.width;
-
-			auto ray = Ray.originTo(topRight + horizontal * v - vertical * u);
-			img[i, j] = cam.colorOf(ray);
-		}
-	}
+	auto cam = new Camera(Vec3.zero, 1920, 1080);
+	cam.render(env);
 
 	auto enc = new PPMEncoder();
-	enc.encodeToFile(img, "test.ppm");
+	cam.encodeToFile(enc, "image.ppm");
 }
