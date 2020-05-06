@@ -1,13 +1,13 @@
-name "glimmer-example"
-description "Glimmer example"
+name "glim-example"
+description "Glim example"
 
 authors "mihnea"
 copyright "Copyright © 2020, mihnea"
 
-homepage "https://github.com/mihnea-s/glimmer"
+homepage "https://github.com/mihnea-s/glim"
 license "Unlicense"
 
-dependency "glimmer" version="*" path=".."
+dependency "glim" version="*" path=".."
 
 targetType "executable"
 targetPath "../build"

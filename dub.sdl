@@ -1,10 +1,10 @@
-name "glimmer"
-description "D Raytracer library"
+name "glim"
+description "D Ray Tracing library"
 
 authors "mihnea"
 copyright "Copyright © 2020, mihnea"
 
-homepage "https://github.com/mihnea-s/glimmer"
+homepage "https://github.com/mihnea-s/glim"
 license "Unlicense"
 
 targetType "library"
