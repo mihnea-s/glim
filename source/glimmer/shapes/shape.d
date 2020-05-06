@@ -1,11 +1,15 @@
 module glimmer.shapes.shape;
 
+import std.typecons : Tuple;
+
 import glimmer.math.ray;
 
 /// All shapes must inherit
 /// from this interface
 interface Shape
 {
+  alias Interval = Tuple!(double, "min", double, "max");
+
   /// Test if the shape is hit by a ray
-  bool isHitBy(const ref Ray) const @safe nothrow;
+  bool testRay(const Ray, Interval, out Hit) const @safe nothrow;
 }
