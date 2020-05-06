@@ -6,8 +6,8 @@ import glimmer.image.buffer;
 interface BufferEncoder
 {
   /// Encode the buffer into a file at `path`
-  void encodeToFile(in RGBABuffer buffer, string path);
+  void encodeToFile(const ref RGBABuffer buffer, const string path);
 
   /// Encode the file in memory
-  ubyte[] encodeToArray(in RGBABuffer buffer);
+  ubyte[] encodeToArray(const ref RGBABuffer buffer);
 }

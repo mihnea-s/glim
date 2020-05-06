@@ -9,13 +9,13 @@ struct RGBA
   /// Black color
   static RGBA black() @safe nothrow
   {
-    return RGBA(0, 0, 0, 1);
+    return RGBA(0, 0, 0, ubyte.max);
   }
 
   /// White color
   static RGBA white() @safe nothrow
   {
-    return RGBA.same(1);
+    return RGBA.same(ubyte.max);
   }
 
   /// Create an RGBA value with the same value
@@ -39,18 +39,27 @@ struct RGBA
   /// Lerp between two colors
   auto lerp(const RGBA other, double t) const @safe nothrow
   {
-    return RGBA.doubles( //
-        this.red + t * (other.red - this.red), //
-        this.green + t * (other.green - this.green), //
-        this.blue + t * (other.blue - this.blue), //
-        this.alpha + t * (other.alpha - this.alpha), //
+    if (t == 0.0)
+    {
+      return this;
+    }
+    else if (t == 1.0)
+    {
+      return other;
+    }
+
+    return RGBA( //
+        cast(ubyte)(this.red + t * (other.red - this.red)), //
+        cast(ubyte)(this.green + t * (other.green - this.green)), //
+        cast(ubyte)(this.blue + t * (other.blue - this.blue)), //
+        cast(ubyte)(this.alpha + t * (other.alpha - this.alpha)), //
         );
   }
 
   @safe nothrow unittest
   {
-    immutable a = RGBA.white();
-    immutable b = RGBA.black();
+    immutable a = RGBA.white;
+    immutable b = RGBA.black;
     assert(a.lerp(b, 0.5) == RGBA(127, 127, 127, 255));
   }
 }

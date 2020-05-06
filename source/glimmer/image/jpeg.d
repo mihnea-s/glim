@@ -8,13 +8,13 @@ class JPEGEncoder : BufferEncoder
 {
 
   /// Encode to file
-  void encodeToFile(in RGBABuffer buffer, string path)
+  override void encodeToFile(const ref RGBABuffer buffer, const string path)
   {
     // TODO
   }
 
   /// Encode in memory
-  ubyte[] encodeToArray(in RGBABuffer buffer)
+  override ubyte[] encodeToArray(const ref RGBABuffer buffer)
   {
     // TODO
     return [];
