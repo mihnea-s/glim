@@ -22,7 +22,7 @@ class Metallic : Material
   {
     immutable refl = ray.direction.reflect(hit.normal);
 
-    bounce = Ray(hit.position, refl);
+    bounce = Ray(hit.position, refl + Vec3.random * _fuzziness);
     atten = _albedo;
 
     return refl.dot(hit.normal) > 0.0;
