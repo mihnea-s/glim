@@ -1,38 +1,52 @@
 module glim.image.rgba;
 
+import glim.math.vector;
+
 ///
 struct RGBA
 {
   /// RGB components
-  ubyte red, green, blue, alpha;
+  float red, green, blue, alpha;
 
   /// Black color
   static RGBA black() @safe nothrow
   {
-    return RGBA(0, 0, 0, ubyte.max);
+    return RGBA.same(0.0);
   }
 
   /// White color
   static RGBA white() @safe nothrow
   {
-    return RGBA.same(ubyte.max);
+    return RGBA.same(1.0);
   }
 
   /// Create an RGBA value with the same value
-  /// in every component
-  static RGBA same(ubyte value) @safe nothrow
+  /// in every component and maximum alpha
+  static RGBA same(double value) @safe nothrow
   {
-    return RGBA(value, value, value, value);
+    return RGBA(value, value, value, 1.0);
   }
 
-  /// Construct RGBA from double
-  static RGBA doubles(double r, double g, double b, double a) @safe nothrow
+  /// Create an RGBA value with maximum opacity
+  static RGBA opaque(double r, double g, double b) @safe nothrow
+  {
+    return RGBA(r, g, b, 1.0);
+  }
+
+  ///
+  static RGBA fromVec(const Vec3 vec) @safe nothrow
+  {
+    return RGBA(vec.x, vec.y, vec.z, 1.0);
+  }
+
+  /// Attenuate this color with some other color
+  auto attenuate(const RGBA other) const @safe nothrow
   {
     return RGBA( //
-        cast(ubyte)(ubyte.max * r), //
-        cast(ubyte)(ubyte.max * g), //
-        cast(ubyte)(ubyte.max * b), //
-        cast(ubyte)(ubyte.max * a), //
+        this.red * other.red, //
+        this.green * other.green, //
+        this.blue * other.blue, //
+        this.alpha * other.alpha, //
         );
   }
 
@@ -49,10 +63,10 @@ struct RGBA
     }
 
     return RGBA( //
-        cast(ubyte)(this.red + t * (other.red - this.red)), //
-        cast(ubyte)(this.green + t * (other.green - this.green)), //
-        cast(ubyte)(this.blue + t * (other.blue - this.blue)), //
-        cast(ubyte)(this.alpha + t * (other.alpha - this.alpha)), //
+        this.red + t * (other.red - this.red), //
+        this.green + t * (other.green - this.green), //
+        this.blue + t * (other.blue - this.blue), //
+        this.alpha + t * (other.alpha - this.alpha), //
         );
   }
 
@@ -60,6 +74,6 @@ struct RGBA
   {
     immutable a = RGBA.white;
     immutable b = RGBA.black;
-    assert(a.lerp(b, 0.5) == RGBA(127, 127, 127, 255));
+    assert(a.lerp(b, 0.5) == RGBA.same(0.5));
   }
 }

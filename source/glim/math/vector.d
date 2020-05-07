@@ -28,17 +28,18 @@ struct Vec3
     return Vec3(v, v, v);
   }
 
-  /// Create a random vector inside the unit
-  /// cube
+  /// Create a random vector along the
+  /// surface of the unit sphere
   static Vec3 random() @safe
   {
     import std.random : uniform;
+    import std.math : PI, sqrt, sin, cos;
 
-    immutable x = uniform(-1.0, 1.0);
-    immutable y = uniform(-1.0, 1.0);
+    immutable a = uniform(0.0, 2.0 * PI);
     immutable z = uniform(-1.0, 1.0);
+    immutable r = sqrt(1.0 - pow(z, 2.0));
 
-    return Vec3(x, y, z);
+    return Vec3(r * sin(a), r * cos(a), z);
   }
 
   /// The length of the vector
@@ -103,6 +104,24 @@ struct Vec3
     immutable a = Vec3(1, 0, 0);
     immutable b = Vec3(0, 0, 1);
     assert(a.cross(b) == Vec3(0, 1, 0));
+  }
+
+  /// Reflect in regards to a normal
+  auto reflect(const Vec3 norm) const
+  {
+    assert(norm.normalized == norm);
+    return this - norm * this.dot(norm) * 2.0;
+  }
+
+  /// Vector negation
+  auto opUnary(string op)()
+  {
+    static if (op == "-")
+    {
+      return Vec3(-this.x, -this.y, -this.z);
+    }
+
+    assert(false, "unimplemented operator " ~ op ~ " for vec3");
   }
 
   /// Operations between two vectors

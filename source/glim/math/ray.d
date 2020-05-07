@@ -5,6 +5,9 @@ import glim.math.vector;
 /// A raycast hit
 struct Hit
 {
+  /// Name of object that was hit
+  string name;
+
   /// Coordinates of the hit
   Vec3 position;
 
@@ -15,10 +18,6 @@ struct Hit
   /// The point at which the ray
   /// hits
   double t;
-
-  /// Did the ray hit the front
-  /// or the back of a face
-  bool frontHit;
 }
 
 /// A single ray

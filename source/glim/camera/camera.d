@@ -19,6 +19,8 @@ class Camera
   private immutable Vec3 _horizontal;
   private immutable Vec3 _vertical;
 
+  static private immutable MIN_TRESH = 0.0001;
+
   ///
   this(Vec3 position, ulong width, ulong height, double fov, ulong samplesPerPx, uint maxBounces) @safe nothrow
   {
@@ -43,24 +45,39 @@ class Camera
 
   private RGBA colorOf(const World world, const ref Ray ray, uint depth = 0)
   {
+    // Max bounce check
     if (depth > _maxBounces)
     {
       return RGBA.black;
     }
 
+    // Hit information
     auto hit = Hit.init;
-    if (world.raycast(ray, 0, double.infinity, hit))
-    {
-      immutable next = hit.position + hit.normal + Vec3.random().normalized;
-      immutable nextRay = Ray(hit.position, next);
 
-      return RGBA.black.lerp(colorOf(world, nextRay, depth + 1), 0.5);
+    // Check if we hit anything
+    if (world.raycast(ray, MIN_TRESH, double.infinity, hit))
+    {
+      auto scattered = Ray();
+      auto attenuation = RGBA.white;
+
+      // Scatter the ray according to object material
+      if (world.scatter(ray, hit, attenuation, scattered))
+      {
+        // If the ray scatters, cast the scattered ray
+        return colorOf(world, scattered).attenuate(attenuation);
+      }
+      else
+      {
+        // If the ray is absorbed, return black
+        return RGBA.black;
+      }
     }
 
+    // Return skybox color if we hit nothing
     immutable dir = ray.direction.normalized;
     immutable t = 0.5 * (dir.y + 1.0);
 
-    return RGBA.white().lerp(RGBA.doubles(0.2, 0.4, 0.8, 1.0), t);
+    return RGBA.white().lerp(RGBA.opaque(0.2, 0.4, 0.8), t);
   }
 
   ///
@@ -71,7 +88,7 @@ class Camera
     {
       foreach (ref col; 0 .. _buffer.width)
       {
-        ulong r = 0, g = 0, b = 0, a = 0;
+        double r = 0, g = 0, b = 0, a = 0;
 
         foreach (i; 0 .. _samplesPerPx)
         {
@@ -89,11 +106,15 @@ class Camera
           a += color.alpha;
         }
 
+        import std.math : sqrt;
+
+        immutable scale = 1.0 / _samplesPerPx;
+
         _buffer[row, col] = RGBA( //
-            cast(ubyte)(r / _samplesPerPx), //
-            cast(ubyte)(g / _samplesPerPx), //
-            cast(ubyte)(b / _samplesPerPx), //
-            cast(ubyte)(a / _samplesPerPx), //
+            sqrt(scale * r), //
+            sqrt(scale * g), //
+            sqrt(scale * b), //
+            sqrt(scale * a), //
             );
       }
     }
