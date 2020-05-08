@@ -53,6 +53,11 @@ class Sphere : Shape
       return true;
     }
 
+    if (discriminant == 0)
+    {
+      return false;
+    }
+
     hit.t = (-b + sqrt(discriminant)) / a;
 
     if (interval.min < hit.t && hit.t < interval.max)

@@ -46,7 +46,7 @@ class Camera
   private RGBA colorOf(const World world, const ref Ray ray, uint depth = 0)
   {
     // Max bounce check
-    if (depth > _maxBounces)
+    if (depth >= _maxBounces)
     {
       return RGBA.black;
     }
@@ -64,7 +64,7 @@ class Camera
       if (world.scatter(ray, hit, attenuation, scattered))
       {
         // If the ray scatters, cast the scattered ray
-        return colorOf(world, scattered).attenuate(attenuation);
+        return colorOf(world, scattered, depth + 1).attenuate(attenuation);
       }
       else
       {

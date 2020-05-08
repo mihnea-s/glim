@@ -43,13 +43,13 @@ struct Vec3
   }
 
   /// The length of the vector
-  auto length() const
+  auto length() const @safe nothrow
   {
     return sqrt(pow(this.x, 2) + pow(this.y, 2) + pow(this.z, 2));
   }
 
   /// Get a unit vector pointing in same direction
-  auto normalized() const @safe
+  auto normalized() const @safe nothrow
   {
     immutable len = this.length;
 
@@ -73,7 +73,7 @@ struct Vec3
   }
 
   /// Dot product
-  auto dot(const Vec3 other) const
+  auto dot(const Vec3 other) const @safe nothrow
   {
     return this.x * other.x + this.y * other.y + this.z * other.z;
   }
@@ -90,7 +90,7 @@ struct Vec3
   }
 
   /// Cross product
-  auto cross(const Vec3 other) const
+  auto cross(const Vec3 other) const @safe nothrow
   {
     return Vec3( //
         this.y * other.z + this.z * other.y, //
@@ -107,14 +107,29 @@ struct Vec3
   }
 
   /// Reflect in regards to a normal
-  auto reflect(const Vec3 norm) const
+  auto reflect(const Vec3 norm) const @safe
   {
-    assert(norm.normalized == norm);
+    assert(0.98 < norm.length && norm.length < 1.02);
     return this - norm * this.dot(norm) * 2.0;
   }
 
+  ///
+  auto refract(const Vec3 norm, const double etaQuot) const @safe
+  {
+    import std.math : sqrt, pow;
+
+    assert(0.98 < norm.length && norm.length < 1.02);
+
+    immutable cosTheta = norm.dot(-this);
+
+    immutable parallel = (this + norm * cosTheta) * etaQuot;
+    immutable perpen = norm * -sqrt(1.0 - pow(parallel.length, 2));
+
+    return parallel + perpen;
+  }
+
   /// Vector negation
-  auto opUnary(string op)()
+  auto opUnary(string op)() const
   {
     static if (op == "-")
     {
