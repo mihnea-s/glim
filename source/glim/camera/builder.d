@@ -9,19 +9,30 @@ class CameraBuilder
   private Vec3 _position;
   private ulong _width;
   private ulong _height;
-  private double _fov;
-  private ulong _samplesPerPixel;
+  private double _vfov;
+  private uint _samplesPerPixel;
   private uint _maxBounces;
+  private uint _numThreads;
 
   /// Create a new camera builder
+  /// with default values:
+  ///
+  ///  `position`     = `Vec3.zero`
+  ///  `width`        = `300`
+  ///  `height`       = `200`
+  ///  `vfov`         = `60`
+  ///  `samplesPerPx` = `1`
+  ///  `maxBounces`   = `3`
+  ///  `numThreads`   = `1`
   this()
   {
     _position = Vec3.zero;
     _width = 300;
     _height = 200;
-    _fov = 2.0 ^^ 10.0;
+    _vfov = 60;
     _samplesPerPixel = 1;
     _maxBounces = 3;
+    _numThreads = 1;
   }
 
   /// Set the camera's position in the world
@@ -45,15 +56,15 @@ class CameraBuilder
     return this;
   }
 
-  /// Set the camera's fov
-  CameraBuilder fov(ubyte fov) @safe nothrow
+  /// Set the camera's vertical fov (in degrees)
+  CameraBuilder vfov(double vfov) @safe nothrow
   {
-    _fov = 2.0 ^^ fov;
+    _vfov = vfov;
     return this;
   }
 
   /// Set the camera's samples per pixel
-  CameraBuilder samplesPerPx(ulong samplesPerPx) @safe nothrow
+  CameraBuilder samplesPerPx(uint samplesPerPx) @safe nothrow
   {
     _samplesPerPixel = samplesPerPx;
     return this;
@@ -66,6 +77,14 @@ class CameraBuilder
     return this;
   }
 
+  /// Set the amount of threads the camera should use
+  /// when rendering
+  CameraBuilder numThreads(uint numThreads) @safe nothrow
+  {
+    _numThreads = numThreads;
+    return this;
+  }
+
   ///
   Camera build() @safe nothrow const
   {
@@ -73,9 +92,10 @@ class CameraBuilder
         _position, //
         _width, //
         _height, //
-        _fov, //
+        _vfov, //
         _samplesPerPixel, //
         _maxBounces, //
+        _numThreads, //
         );
   }
 }

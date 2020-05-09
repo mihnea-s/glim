@@ -26,8 +26,8 @@ void main()
 	env["ground"] = new Lambertian(RGBA.opaque(0.2, 0.7, 0.3));
 
 	// Create a new camera at origin
-	auto cam = new CameraBuilder().width(1280).height(720).fov(10)
-		.samplesPerPx(100).maxBounces(50).build;
+	auto cam = new CameraBuilder().width(1280).height(720).vfov(10)
+		.samplesPerPx(100).maxBounces(50).numThreads(8).build;
 
 	// Perform a render of the world
 	cam.render(env);

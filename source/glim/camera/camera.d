@@ -1,49 +1,143 @@
 module glim.camera.camera;
 
-import std.typecons : tuple;
+import std.concurrency : thisTid, Tid, send, receive, receiveOnly;
+import std.typecons : tuple, Nullable;
 
 import glim.shapes;
 import glim.image;
 import glim.math;
 import glim.world;
 
+// Messages for message passing concurrency
+
+private struct MsgRequestNextTile
+{
+  immutable uint threadIndex;
+}
+
+private struct MsgAcceptNextTile
+{
+  immutable ulong fromRow, toRow;
+  immutable ulong fromCol, toCol;
+}
+
+private struct MsgCalculatedColor
+{
+  immutable ulong row, column;
+  immutable RGBA value;
+}
+
+private struct MsgFinish
+{
+}
+
+// Render function
+
+private void renderWorker(Tid parent, uint index, const Camera camera)
+{
+  // Accept MsgAcceptNextTile, calculate every color in the tile
+  // then send it back in a MsgCalculatedColor repeat until a MsgFinish
+  // is encountered, then exit
+  auto finished = false;
+
+  while (!finished)
+  {
+    send(parent, MsgRequestNextTile(index));
+
+    receive( //
+        (MsgFinish _) { finished = true; }, //
+        (MsgAcceptNextTile tile) {
+      foreach (row; tile.fromRow .. tile.toRow)
+      {
+        foreach (col; tile.fromCol .. tile.toCol)
+        {
+          double r = 0, g = 0, b = 0, a = 0;
+
+          foreach (i; 0 .. camera._samplesPerPx)
+          {
+            import std.random : uniform;
+
+            auto u = (col + uniform(0.0, 1.0)) / (camera._renderBuffer.width - 1.0);
+            auto v = (row + uniform(0.0, 1.0)) / (camera._renderBuffer.height - 1.0);
+
+            immutable ray = camera.rayOf(u, v);
+            immutable color = camera.colorOf(ray);
+
+            r += color.red;
+            g += color.green;
+            b += color.blue;
+            a += color.alpha;
+          }
+
+          import std.math : sqrt;
+
+          immutable scale = 1.0 / camera._samplesPerPx;
+
+          immutable color = RGBA( //
+            sqrt(scale * r), //
+            sqrt(scale * g), //
+            sqrt(scale * b), //
+            sqrt(scale * a), //
+            );
+
+          send(parent, MsgCalculatedColor(row, col, color));
+        }
+      }
+    });
+  }
+}
+
 /// Camera
 class Camera
 {
-  private Vec3 _position;
-  private RGBABuffer _buffer;
-  private ulong _samplesPerPx;
-  private uint _maxBounces;
-
+  private immutable Vec3 _position;
+  private immutable uint _samplesPerPx;
+  private immutable uint _maxBounces;
+  private immutable uint _numThreads;
   private immutable Vec3 _topLeft;
   private immutable Vec3 _horizontal;
   private immutable Vec3 _vertical;
 
+  private RGBABuffer _renderBuffer;
+  private const(World)* _renderWorld;
+
   static private immutable MIN_TRESH = 0.0001;
 
   ///
-  this(Vec3 position, ulong width, ulong height, double fov, ulong samplesPerPx, uint maxBounces) @safe nothrow
+  this(Vec3 position, ulong width, ulong height, double vfov, uint samplesPerPx,
+      uint maxBounces, uint numThreads) @safe nothrow
   {
+    import std.math : PI, tan;
+
+    assert(width > 0 && height > 0, "height & width should be positive");
+    assert(vfov > 0, "vfov should be bigger than 0");
+
     _position = position;
-    _buffer = RGBABuffer.fromWH(width, height);
+    _renderBuffer = RGBABuffer.fromWH(width, height);
+
     _samplesPerPx = samplesPerPx;
     _maxBounces = maxBounces;
+    _numThreads = numThreads;
 
-    immutable h = width / fov;
-    immutable v = height / fov;
+    immutable fovRads = vfov / 360.0 * 2.0 * PI;
+    immutable aspect = (width * 1.0) / height;
+
+    // Vertical & horizontal
+    immutable v = 2.0 * tan(fovRads / 2.0);
+    immutable h = aspect * v;
 
     _topLeft = Vec3(-h / 2.0, v / 2.0, -1.0);
     _horizontal = Vec3(h, 0.0, 0.0);
     _vertical = Vec3(0.0, v, 0.0);
   }
 
-  private auto rayOf(double u, double v)
+  private auto rayOf(double u, double v) const
   {
     immutable offset = _position + _topLeft + (_horizontal * u) - (_vertical * v);
     return Ray(_position, offset.normalized);
   }
 
-  private RGBA colorOf(const World world, const ref Ray ray, uint depth = 0)
+  private RGBA colorOf(const ref Ray ray, uint depth = 0) const
   {
     // Max bounce check
     if (depth >= _maxBounces)
@@ -55,16 +149,16 @@ class Camera
     auto hit = Hit.init;
 
     // Check if we hit anything
-    if (world.raycast(ray, MIN_TRESH, double.infinity, hit))
+    if (_renderWorld.raycast(ray, MIN_TRESH, double.infinity, hit))
     {
       auto scattered = Ray();
       auto attenuation = RGBA.white;
 
       // Scatter the ray according to object material
-      if (world.scatter(ray, hit, attenuation, scattered))
+      if (_renderWorld.scatter(ray, hit, attenuation, scattered))
       {
         // If the ray scatters, cast the scattered ray
-        return colorOf(world, scattered, depth + 1).attenuate(attenuation);
+        return colorOf(scattered, depth + 1).attenuate(attenuation);
       }
       else
       {
@@ -83,10 +177,64 @@ class Camera
   ///
   void render(const World world)
   {
+    import std.concurrency : spawn;
+    import std.algorithm.comparison : min;
 
-    foreach (ref row; 0 .. _buffer.height)
+    // Send each tile to renderWorker then MsgFinish to each one
+
+    _renderWorld = &world;
+
+    auto threads = new Tid[_numThreads];
+
+    foreach (i; 0 .. _numThreads)
     {
-      foreach (ref col; 0 .. _buffer.width)
+      threads[i] = spawn(&renderWorker, thisTid, i, cast(immutable(Camera)) this);
+    }
+
+    uint finished = 0;
+    ulong row = 0, col = 0;
+
+    while (finished != _numThreads)
+    {
+      receive( //
+          (MsgCalculatedColor msg) {
+        this._renderBuffer[msg.row, msg.column] = msg.value;
+      }, //
+          (MsgRequestNextTile req) {
+        if (row >= _renderBuffer.height)
+        {
+          send(threads[req.threadIndex], MsgFinish());
+          finished++;
+          return;
+        }
+
+        immutable endCol = min(col + 10, _renderBuffer.width);
+        immutable endRow = min(row + 10, _renderBuffer.height);
+
+        send(threads[req.threadIndex], MsgAcceptNextTile(row, endRow, col, endCol));
+
+        if (endCol == _renderBuffer.width)
+        {
+          row = row + 10;
+          col = 0;
+        }
+        else
+        {
+          col = endCol;
+        }
+      }, //
+          );
+    }
+  }
+
+  ///
+  void renderSingleThreaded(const World world)
+  {
+    _renderWorld = &world;
+
+    foreach (ref row; 0 .. _renderBuffer.height)
+    {
+      foreach (ref col; 0 .. _renderBuffer.width)
       {
         double r = 0, g = 0, b = 0, a = 0;
 
@@ -94,11 +242,11 @@ class Camera
         {
           import std.random : uniform;
 
-          auto u = (col + uniform(0.0, 1.0)) / (_buffer.width - 1.0);
-          auto v = (row + uniform(0.0, 1.0)) / (_buffer.height - 1.0);
+          auto u = (col + uniform(0.0, 1.0)) / (_renderBuffer.width - 1.0);
+          auto v = (row + uniform(0.0, 1.0)) / (_renderBuffer.height - 1.0);
 
           immutable ray = this.rayOf(u, v);
-          immutable color = this.colorOf(world, ray);
+          immutable color = this.colorOf(ray);
 
           r += color.red;
           g += color.green;
@@ -110,7 +258,7 @@ class Camera
 
         immutable scale = 1.0 / _samplesPerPx;
 
-        _buffer[row, col] = RGBA( //
+        _renderBuffer[row, col] = RGBA( //
             sqrt(scale * r), //
             sqrt(scale * g), //
             sqrt(scale * b), //
@@ -118,18 +266,18 @@ class Camera
             );
       }
     }
+
   }
 
   /// 
   auto encodeToArray(BufferEncoder encoder)
   {
-    return encoder.encodeToArray(_buffer);
+    return encoder.encodeToArray(_renderBuffer);
   }
 
   ///
   auto encodeToFile(BufferEncoder encoder, const string path)
   {
-    return encoder.encodeToFile(_buffer, path);
+    return encoder.encodeToFile(_renderBuffer, path);
   }
-
 }
