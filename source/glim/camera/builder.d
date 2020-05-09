@@ -12,7 +12,6 @@ class CameraBuilder
 
   private ulong _width;
   private ulong _height;
-  private ulong _tileSize;
 
   private uint _samplesPerPixel;
   private uint _maxBounces;
@@ -67,13 +66,6 @@ class CameraBuilder
     return this;
   }
 
-  /// Set the camera rendering tile size
-  CameraBuilder tileSize(ulong tileSize) @safe nothrow
-  {
-    _tileSize = tileSize;
-    return this;
-  }
-
   /// Set the camera's samples per pixel
   CameraBuilder samplesPerPx(uint samplesPerPx) @safe nothrow
   {
@@ -105,7 +97,6 @@ class CameraBuilder
 
         _width, //
         _height, //
-        _tileSize, //
 
         _samplesPerPixel, //
         _maxBounces, //

@@ -32,8 +32,8 @@ void main()
 		.samplesPerPx(100).maxBounces(50).numThreads(8).build;
 
 	// Perform a render of the world
-	// cam.renderMultiThreaded(env);
-	cam.renderSingleThreaded(env);
+	cam.renderMultiThreaded(env);
+	// cam.renderSingleThreaded(env);
 
 	// Encode the camera buffer to a file
 	auto enc = new PPMEncoder();

@@ -10,83 +10,6 @@ import glim.world;
 
 // Messages for message passing concurrency
 
-private struct MsgRequestNextTile
-{
-  immutable uint threadIndex;
-}
-
-private struct MsgAcceptNextTile
-{
-  immutable ulong fromRow, toRow;
-  immutable ulong fromCol, toCol;
-}
-
-private struct MsgCalculatedColor
-{
-  immutable ulong row, column;
-  immutable RGBA value;
-}
-
-private struct MsgFinish
-{
-}
-
-// Render function
-
-private void renderWorker(Tid parent, uint index, const Camera camera)
-{
-  // Accept MsgAcceptNextTile, calculate every color in the tile
-  // then send it back in a MsgCalculatedColor repeat until a MsgFinish
-  // is encountered, then exit
-  auto finished = false;
-
-  while (!finished)
-  {
-    send(parent, MsgRequestNextTile(index));
-
-    receive( //
-        (MsgFinish _) { finished = true; }, //
-        (MsgAcceptNextTile tile) {
-      foreach (row; tile.fromRow .. tile.toRow)
-      {
-        foreach (col; tile.fromCol .. tile.toCol)
-        {
-          double r = 0, g = 0, b = 0, a = 0;
-
-          foreach (i; 0 .. camera._samplesPerPx)
-          {
-            import std.random : uniform;
-
-            auto u = (col + uniform(0.0, 1.0)) / (camera._renderBuffer.width - 1.0);
-            auto v = (row + uniform(0.0, 1.0)) / (camera._renderBuffer.height - 1.0);
-
-            immutable ray = camera.rayOf(u, v);
-            immutable color = camera.colorOf(ray);
-
-            r += color.red;
-            g += color.green;
-            b += color.blue;
-            a += color.alpha;
-          }
-
-          import std.math : sqrt;
-
-          immutable scale = 1.0 / camera._samplesPerPx;
-
-          immutable color = RGBA( //
-            sqrt(scale * r), //
-            sqrt(scale * g), //
-            sqrt(scale * b), //
-            sqrt(scale * a), //
-            );
-
-          send(parent, MsgCalculatedColor(row, col, color));
-        }
-      }
-    });
-  }
-}
-
 /// Camera
 class Camera
 {
@@ -95,8 +18,6 @@ class Camera
   private immutable Vec3 _topLeft;
   private immutable Vec3 _horizontal;
   private immutable Vec3 _vertical;
-
-  private immutable ulong _tileSize;
 
   private immutable uint _samplesPerPx;
   private immutable uint _maxBounces;
@@ -108,8 +29,8 @@ class Camera
   static private immutable MIN_TRESH = 0.0001;
 
   ///
-  this(Vec3 position, double vfov, ulong width, ulong height, ulong tileSize,
-      uint samplesPerPx, uint maxBounces, uint numThreads) @safe nothrow
+  this(Vec3 position, double vfov, ulong width, ulong height, uint samplesPerPx,
+      uint maxBounces, uint numThreads) @safe nothrow
   {
     import std.math : PI, tan;
 
@@ -117,8 +38,6 @@ class Camera
     assert(vfov > 0, "vfov should be bigger than 0");
 
     _position = position;
-
-    _tileSize = tileSize;
 
     _samplesPerPx = samplesPerPx;
     _maxBounces = maxBounces;
@@ -182,6 +101,80 @@ class Camera
     return RGBA.white().lerp(RGBA.opaque(0.2, 0.4, 0.8), t);
   }
 
+  private struct MsgRequestNextRow
+  {
+    immutable uint threadIndex;
+  }
+
+  private struct MsgAcceptNextRow
+  {
+    immutable ulong row;
+  }
+
+  private struct MsgCalculatedColor
+  {
+    immutable ulong row, column;
+    immutable RGBA value;
+  }
+
+  private struct MsgFinish
+  {
+  }
+
+  static private void renderWorker(Tid parent, uint index, const Camera camera)
+  {
+    // Accept MsgAcceptNextRow, calculate every color in the row
+    // then send it back in a MsgCalculatedColor repeat until a MsgFinish
+    // is encountered, then exit
+    auto finished = false;
+
+    while (!finished)
+    {
+      send(parent, MsgRequestNextRow(index));
+
+      receive( //
+          (MsgFinish _) { finished = true; }, //
+          (MsgAcceptNextRow msg) {
+        immutable row = msg.row;
+
+        foreach (col; 0 .. camera._renderBuffer.width)
+        {
+          double r = 0, g = 0, b = 0, a = 0;
+
+          foreach (i; 0 .. camera._samplesPerPx)
+          {
+            import std.random : uniform;
+
+            auto u = (col + uniform(0.0, 1.0)) / (camera._renderBuffer.width - 1.0);
+            auto v = (row + uniform(0.0, 1.0)) / (camera._renderBuffer.height - 1.0);
+
+            immutable ray = camera.rayOf(u, v);
+            immutable color = camera.colorOf(ray);
+
+            r += color.red;
+            g += color.green;
+            b += color.blue;
+            a += color.alpha;
+          }
+
+          import std.math : sqrt;
+
+          immutable scale = 1.0 / camera._samplesPerPx;
+
+          immutable color = RGBA( //
+            sqrt(scale * r), //
+            sqrt(scale * g), //
+            sqrt(scale * b), //
+            sqrt(scale * a), //
+            );
+
+          send(parent, MsgCalculatedColor(row, col, color));
+        }
+
+      });
+    }
+  }
+
   ///
   void renderMultiThreaded(const World world)
   {
@@ -200,8 +193,7 @@ class Camera
       threads[i] = spawn(&renderWorker, thisTid, i, cast(immutable(Camera)) this);
     }
 
-    uint finished = 0;
-    ulong row = 0, col = 0;
+    ulong finished = 0, row = 0;
 
     while (finished != _numThreads)
     {
@@ -209,27 +201,18 @@ class Camera
           (MsgCalculatedColor msg) {
         this._renderBuffer[msg.row, msg.column] = msg.value;
       }, //
-          (MsgRequestNextTile req) {
+          (MsgRequestNextRow req) {
+        auto thread = threads[req.threadIndex];
+
         if (row >= _renderBuffer.height)
         {
-          send(threads[req.threadIndex], MsgFinish());
+          send(thread, MsgFinish());
           finished++;
-          return;
-        }
-
-        immutable endCol = min(col + _tileSize, _renderBuffer.width);
-        immutable endRow = min(row + _tileSize, _renderBuffer.height);
-
-        send(threads[req.threadIndex], MsgAcceptNextTile(row, endRow, col, endCol));
-
-        if (endCol == _renderBuffer.width)
-        {
-          row = row + _tileSize;
-          col = 0;
         }
         else
         {
-          col = endCol;
+          send(thread, MsgAcceptNextRow(row));
+          row++;
         }
       }, //
           );
