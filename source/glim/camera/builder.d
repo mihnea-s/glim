@@ -7,9 +7,13 @@ import glim.camera.camera;
 class CameraBuilder
 {
   private Vec3 _position;
+
+  private double _vfov;
+
   private ulong _width;
   private ulong _height;
-  private double _vfov;
+  private ulong _tileSize;
+
   private uint _samplesPerPixel;
   private uint _maxBounces;
   private uint _numThreads;
@@ -42,6 +46,13 @@ class CameraBuilder
     return this;
   }
 
+  /// Set the camera's vertical fov (in degrees)
+  CameraBuilder vfov(double vfov) @safe nothrow
+  {
+    _vfov = vfov;
+    return this;
+  }
+
   /// Set the camera's width
   CameraBuilder width(ulong width) @safe nothrow
   {
@@ -56,10 +67,10 @@ class CameraBuilder
     return this;
   }
 
-  /// Set the camera's vertical fov (in degrees)
-  CameraBuilder vfov(double vfov) @safe nothrow
+  /// Set the camera rendering tile size
+  CameraBuilder tileSize(ulong tileSize) @safe nothrow
   {
-    _vfov = vfov;
+    _tileSize = tileSize;
     return this;
   }
 
@@ -90,9 +101,12 @@ class CameraBuilder
   {
     return new Camera( //
         _position, //
+        _vfov, //
+
         _width, //
         _height, //
-        _vfov, //
+        _tileSize, //
+
         _samplesPerPixel, //
         _maxBounces, //
         _numThreads, //

@@ -91,12 +91,16 @@ private void renderWorker(Tid parent, uint index, const Camera camera)
 class Camera
 {
   private immutable Vec3 _position;
-  private immutable uint _samplesPerPx;
-  private immutable uint _maxBounces;
-  private immutable uint _numThreads;
+
   private immutable Vec3 _topLeft;
   private immutable Vec3 _horizontal;
   private immutable Vec3 _vertical;
+
+  private immutable ulong _tileSize;
+
+  private immutable uint _samplesPerPx;
+  private immutable uint _maxBounces;
+  private immutable uint _numThreads;
 
   private RGBABuffer _renderBuffer;
   private const(World)* _renderWorld;
@@ -104,8 +108,8 @@ class Camera
   static private immutable MIN_TRESH = 0.0001;
 
   ///
-  this(Vec3 position, ulong width, ulong height, double vfov, uint samplesPerPx,
-      uint maxBounces, uint numThreads) @safe nothrow
+  this(Vec3 position, double vfov, ulong width, ulong height, ulong tileSize,
+      uint samplesPerPx, uint maxBounces, uint numThreads) @safe nothrow
   {
     import std.math : PI, tan;
 
@@ -113,7 +117,8 @@ class Camera
     assert(vfov > 0, "vfov should be bigger than 0");
 
     _position = position;
-    _renderBuffer = RGBABuffer.fromWH(width, height);
+
+    _tileSize = tileSize;
 
     _samplesPerPx = samplesPerPx;
     _maxBounces = maxBounces;
@@ -129,6 +134,9 @@ class Camera
     _topLeft = Vec3(-h / 2.0, v / 2.0, -1.0);
     _horizontal = Vec3(h, 0.0, 0.0);
     _vertical = Vec3(0.0, v, 0.0);
+
+    _renderBuffer = RGBABuffer.fromWH(width, height);
+    _renderWorld = null;
   }
 
   private auto rayOf(double u, double v) const
@@ -175,13 +183,14 @@ class Camera
   }
 
   ///
-  void render(const World world)
+  void renderMultiThreaded(const World world)
   {
     import std.concurrency : spawn;
     import std.algorithm.comparison : min;
 
     // Send each tile to renderWorker then MsgFinish to each one
 
+    assert(world !is null, "world to be rendered is null");
     _renderWorld = &world;
 
     auto threads = new Tid[_numThreads];
@@ -208,14 +217,14 @@ class Camera
           return;
         }
 
-        immutable endCol = min(col + 10, _renderBuffer.width);
-        immutable endRow = min(row + 10, _renderBuffer.height);
+        immutable endCol = min(col + _tileSize, _renderBuffer.width);
+        immutable endRow = min(row + _tileSize, _renderBuffer.height);
 
         send(threads[req.threadIndex], MsgAcceptNextTile(row, endRow, col, endCol));
 
         if (endCol == _renderBuffer.width)
         {
-          row = row + 10;
+          row = row + _tileSize;
           col = 0;
         }
         else
