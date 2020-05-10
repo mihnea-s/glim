@@ -7,6 +7,7 @@ import glim.camera.camera;
 class CameraBuilder
 {
   private Vec3 _position;
+  private Vec3 _lookAt;
 
   private double _vfov;
 
@@ -30,9 +31,12 @@ class CameraBuilder
   this()
   {
     _position = Vec3.zero;
+    _lookAt = Vec3.up;
+
+    _vfov = 60;
     _width = 300;
     _height = 200;
-    _vfov = 60;
+
     _samplesPerPixel = 1;
     _maxBounces = 3;
     _numThreads = 1;
@@ -42,6 +46,13 @@ class CameraBuilder
   CameraBuilder position(Vec3 pos) @safe nothrow
   {
     _position = pos;
+    return this;
+  }
+
+  /// Set the camera's target
+  CameraBuilder lookAt(Vec3 lookAt) @safe nothrow
+  {
+    _lookAt = lookAt;
     return this;
   }
 
@@ -93,6 +104,7 @@ class CameraBuilder
   {
     return new Camera( //
         _position, //
+        _lookAt, //
         _vfov, //
 
         _width, //

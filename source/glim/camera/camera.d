@@ -1,20 +1,16 @@
 module glim.camera.camera;
 
-import std.concurrency : thisTid, Tid, send, receive, receiveOnly;
-import std.typecons : tuple, Nullable;
+import std.concurrency : Tid;
 
 import glim.shapes;
 import glim.image;
 import glim.math;
 import glim.world;
 
-// Messages for message passing concurrency
-
 /// Camera
 class Camera
 {
   private immutable Vec3 _position;
-
   private immutable Vec3 _topLeft;
   private immutable Vec3 _horizontal;
   private immutable Vec3 _vertical;
@@ -29,20 +25,18 @@ class Camera
   static private immutable MIN_TRESH = 0.0001;
 
   ///
-  this(Vec3 position, double vfov, ulong width, ulong height, uint samplesPerPx,
-      uint maxBounces, uint numThreads) @safe nothrow
+  this(Vec3 position, Vec3 lookAt, double vfov, ulong width, ulong height,
+      uint samplesPerPx, uint maxBounces, uint numThreads) @safe nothrow
   {
     import std.math : PI, tan;
-
-    assert(width > 0 && height > 0, "height & width should be positive");
-    assert(vfov > 0, "vfov should be bigger than 0");
-
-    _position = position;
 
     _samplesPerPx = samplesPerPx;
     _maxBounces = maxBounces;
     _numThreads = numThreads;
 
+    _position = position;
+
+    assert(vfov > 0, "vfov should be bigger than 0");
     immutable fovRads = vfov / 360.0 * 2.0 * PI;
     immutable aspect = (width * 1.0) / height;
 
@@ -50,17 +44,23 @@ class Camera
     immutable v = 2.0 * tan(fovRads / 2.0);
     immutable h = aspect * v;
 
-    _topLeft = Vec3(-h / 2.0, v / 2.0, -1.0);
-    _horizontal = Vec3(h, 0.0, 0.0);
-    _vertical = Vec3(0.0, v, 0.0);
+    // Camera orthonormal basis
+    immutable z = (position - lookAt).normalized;
+    immutable x = z.cross(Vec3.up).normalized;
+    immutable y = x.cross(z).normalized;
 
+    _topLeft = -x * (h / 2.0) + y * (v / 2.0) - z;
+    _horizontal = x * h;
+    _vertical = y * v;
+
+    assert(width > 0 && height > 0, "height & width should be positive");
     _renderBuffer = RGBABuffer.fromWH(width, height);
     _renderWorld = null;
   }
 
   private auto rayOf(double u, double v) const
   {
-    immutable offset = _position + _topLeft + (_horizontal * u) - (_vertical * v);
+    immutable offset = _topLeft + (_horizontal * u) - (_vertical * v);
     return Ray(_position, offset.normalized);
   }
 
@@ -123,6 +123,8 @@ class Camera
 
   static private void renderWorker(Tid parent, uint index, const Camera camera)
   {
+    import std.concurrency : send, receive;
+
     // Accept MsgAcceptNextRow, calculate every color in the row
     // then send it back in a MsgCalculatedColor repeat until a MsgFinish
     // is encountered, then exit
@@ -178,7 +180,7 @@ class Camera
   ///
   void renderMultiThreaded(const World world)
   {
-    import std.concurrency : spawn;
+    import std.concurrency : spawn, thisTid, send, receive;
     import std.algorithm.comparison : min;
 
     // Send each tile to renderWorker then MsgFinish to each one
