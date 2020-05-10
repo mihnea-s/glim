@@ -1,6 +1,7 @@
 import std.stdio;
 import std.format;
 import std.algorithm.comparison;
+import std.math;
 
 import glim.image;
 import glim.math;
@@ -28,14 +29,20 @@ void main()
 	env["3"] = new Metallic(RGBA.opaque(1.0, 1.0, 0.0), 1.0);
 	env["ground"] = new Lambertian(RGBA.opaque(0.2, 0.7, 0.3));
 
-	// Create a new camera at origin
-	auto cam = new CameraBuilder().position(Vec3(10, 10, -5)).lookAt(Vec3(0, 0,
-			-4)).vfov(90).samplesPerPx(100).maxBounces(50).numThreads(8).build;
+	foreach (i; 0 .. 60)
+	{
+		immutable fov = (10.0 - 0.5) * (1 - (i / 60.0)) + 0.5;
 
-	// Perform a render of the world
-	cam.renderMultiThreaded(env);
+		// Create a new camera at origin
+		auto cam = new CameraBuilder().position(Vec3(1000, 1000, 0)).width(600)
+			.height(300).lookAt(Vec3(0, 0, -3.5)).vfov(fov).samplesPerPx(100)
+			.maxBounces(50).numThreads(8).build;
 
-	// Encode the camera buffer to a file
-	auto enc = new PNGEncoder();
-	cam.encodeToFile(enc, "render.png");
+		// Perform a render of the world
+		cam.renderMultiThreaded(env);
+
+		// Encode the camera buffer to a file
+		auto enc = new PNGEncoder();
+		cam.encodeToFile(enc, format("%d.png", i));
+	}
 }

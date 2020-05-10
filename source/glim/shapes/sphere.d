@@ -69,12 +69,4 @@ class Sphere : Shape
 
     return false;
   }
-
-  @safe nothrow unittest
-  {
-    auto unit = new Sphere;
-    auto ray = Ray.originTo(Vec3.unit);
-    assert(unit.isHitBy(ray));
-    auto sphr = new Sphere;
-  }
 }

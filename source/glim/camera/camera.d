@@ -46,8 +46,8 @@ class Camera
 
     // Camera orthonormal basis
     immutable z = (position - lookAt).normalized;
-    immutable x = z.cross(Vec3.up).normalized;
-    immutable y = x.cross(z).normalized;
+    immutable x = Vec3.up.cross(z).normalized;
+    immutable y = z.cross(x).normalized;
 
     _topLeft = -x * (h / 2.0) + y * (v / 2.0) - z;
     _horizontal = x * h;

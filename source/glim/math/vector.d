@@ -25,7 +25,7 @@ struct Vec3
   /// in the positive y axis
   static Vec3 up() @safe nothrow
   {
-    return Vec3(0, 1, 0);
+    return Vec3(0, 1.0, 0);
   }
 
   /// Create a vector with the same value
@@ -100,17 +100,26 @@ struct Vec3
   auto cross(const Vec3 other) const @safe nothrow
   {
     return Vec3( //
-        this.y * other.z + this.z * other.y, //
-        this.z * other.x + this.x * other.z, //
-        this.x * other.y + this.y * other.x, //
+        this.y * other.z - this.z * other.y, //
+        this.z * other.x - this.x * other.z, //
+        this.x * other.y - this.y * other.x, //
         );
   }
 
   @safe nothrow unittest
   {
-    immutable a = Vec3(1, 0, 0);
-    immutable b = Vec3(0, 0, 1);
-    assert(a.cross(b) == Vec3(0, 1, 0));
+    immutable i = Vec3(1, 0, 0);
+    immutable j = Vec3(0, 1, 0);
+    immutable k = Vec3(0, 0, 1);
+
+    assert(i.cross(j) == k);
+    assert(i.cross(k) == j);
+
+    assert(j.cross(i) == k);
+    assert(j.cross(k) == i);
+
+    assert(k.cross(i) == j);
+    assert(k.cross(j) == i);
   }
 
   /// Reflect in regards to a normal
