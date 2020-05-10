@@ -1,4 +1,5 @@
 import std.stdio;
+import std.format;
 import std.algorithm.comparison;
 
 import glim.image;
@@ -28,14 +29,13 @@ void main()
 	env["ground"] = new Lambertian(RGBA.opaque(0.2, 0.7, 0.3));
 
 	// Create a new camera at origin
-	auto cam = new CameraBuilder().width(1920).height(1080).vfov(60)
-		.samplesPerPx(100).maxBounces(50).numThreads(8).build;
+	auto cam = new CameraBuilder().position(Vec3(10, 10, -5)).lookAt(Vec3(0, 0,
+			-4)).vfov(90).samplesPerPx(100).maxBounces(50).numThreads(8).build;
 
 	// Perform a render of the world
 	cam.renderMultiThreaded(env);
-	// cam.renderSingleThreaded(env);
 
 	// Encode the camera buffer to a file
-	auto enc = new PPMEncoder();
-	cam.encodeToFile(enc, "image.ppm");
+	auto enc = new PNGEncoder();
+	cam.encodeToFile(enc, "render.png");
 }

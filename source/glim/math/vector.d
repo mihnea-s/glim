@@ -21,6 +21,13 @@ struct Vec3
     return Vec3.same(1);
   }
 
+  /// Create a unit vector pointing
+  /// in the positive y axis
+  static Vec3 up() @safe nothrow
+  {
+    return Vec3(0, 1, 0);
+  }
+
   /// Create a vector with the same value
   /// for all coordinates
   static Vec3 same(double v) @safe nothrow
