@@ -10,7 +10,7 @@ import glim.image.encoder;
 /// Encoder for PPM files
 class PPMEncoder : BufferEncoder
 {
-  private static const HEADER = "P3";
+  static private immutable HEADER = "P3";
 
   private void encodeToWriter(W)(const ref RGBABuffer buffer, W writer)
   {
