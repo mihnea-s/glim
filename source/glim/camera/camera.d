@@ -54,9 +54,9 @@ class Camera
     _y = _z.cross(_x).normalized;
 
     _topLeft = //
-      -_x * focusDistance * (h / 2.0) //
-       + _y * focusDistance * (v / 2.0) //
-       - _z * focusDistance;
+      (-_x * (h / 2.0) //
+           + _y * (v / 2.0) //
+           - _z) * focusDistance;
 
     _horizontal = _x * focusDistance * h;
     _vertical = _y * focusDistance * v;
@@ -66,26 +66,36 @@ class Camera
     _renderWorld = null;
   }
 
-  private auto randomDiskVec() const
+  private auto dofOffsetVec() const
   {
     import std.math : sqrt, pow;
     import std.random : uniform;
 
-    immutable rX = uniform(-1.0, 1.0);
-    immutable tresh = sqrt(1.0 - pow(rX, 2));
-    immutable rY = uniform(-tresh, tresh);
+    // Calculate a random X
+    immutable rX = uniform!"()"(-1.0, 1.0);
 
-    return _x * _lensRadius * rX + _y * _lensRadius * rY;
+    // Calculate a treshold for Y such that
+    // X**2 + Y**2 < 1
+    immutable tresh = sqrt(1.0 - pow(rX, 2));
+
+    // Calculate Y between tresholds
+    immutable rY = uniform!"()"(-tresh, tresh);
+
+    // Calculate offset vector using camera basis vectors
+    return _x * _lensRadius * rX - _y * _lensRadius * rY;
   }
 
   private auto rayOf(double u, double v) const
   {
     import std.random : uniform;
 
-    immutable to = _topLeft + (_horizontal * u) - (_vertical * v);
-    immutable of = randomDiskVec();
+    // Depth of field offset
+    immutable offset = dofOffsetVec();
 
-    return Ray(_position - of, to.normalized);
+    // Target vector on virtual film plane
+    immutable to = _topLeft + (_horizontal * u) - (_vertical * v);
+
+    return Ray(_position + offset, to.normalized);
   }
 
   private RGBA colorOf(const ref Ray ray, uint depth = 0) const
