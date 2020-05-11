@@ -11,10 +11,12 @@ import glim.world;
 class Camera
 {
   private immutable Vec3 _position;
+  private immutable Vec3 _x, _y, _z;
   private immutable Vec3 _topLeft;
   private immutable Vec3 _horizontal;
   private immutable Vec3 _vertical;
 
+  private immutable double _lensRadius;
   private immutable uint _samplesPerPx;
   private immutable uint _maxBounces;
   private immutable uint _numThreads;
@@ -25,10 +27,12 @@ class Camera
   static private immutable MIN_TRESH = 0.0001;
 
   ///
-  this(Vec3 position, Vec3 lookAt, double vfov, ulong width, ulong height,
-      uint samplesPerPx, uint maxBounces, uint numThreads) @safe nothrow
+  this(Vec3 position, Vec3 lookAt, double vfov, double aperture, double focusDistance,
+      ulong width, ulong height, uint samplesPerPx, uint maxBounces, uint numThreads) @safe nothrow
   {
     import std.math : PI, tan;
+
+    _lensRadius = aperture / 2.0;
 
     _samplesPerPx = samplesPerPx;
     _maxBounces = maxBounces;
@@ -45,23 +49,43 @@ class Camera
     immutable h = aspect * v;
 
     // Camera orthonormal basis
-    immutable z = (position - lookAt).normalized;
-    immutable x = Vec3.up.cross(z).normalized;
-    immutable y = z.cross(x).normalized;
+    _z = (position - lookAt).normalized;
+    _x = Vec3.up.cross(_z).normalized;
+    _y = _z.cross(_x).normalized;
 
-    _topLeft = -x * (h / 2.0) + y * (v / 2.0) - z;
-    _horizontal = x * h;
-    _vertical = y * v;
+    _topLeft = //
+      -_x * focusDistance * (h / 2.0) //
+       + _y * focusDistance * (v / 2.0) //
+       - _z * focusDistance;
+
+    _horizontal = _x * focusDistance * h;
+    _vertical = _y * focusDistance * v;
 
     assert(width > 0 && height > 0, "height & width should be positive");
-    _renderBuffer = RGBABuffer.fromWH(width, height);
+    _renderBuffer = new RGBABuffer(width, height);
     _renderWorld = null;
+  }
+
+  private auto randomDiskVec() const
+  {
+    import std.math : sqrt, pow;
+    import std.random : uniform;
+
+    immutable rX = uniform(-1.0, 1.0);
+    immutable tresh = sqrt(1.0 - pow(rX, 2));
+    immutable rY = uniform(-tresh, tresh);
+
+    return _x * _lensRadius * rX + _y * _lensRadius * rY;
   }
 
   private auto rayOf(double u, double v) const
   {
-    immutable offset = _topLeft + (_horizontal * u) - (_vertical * v);
-    return Ray(_position, offset.normalized);
+    import std.random : uniform;
+
+    immutable to = _topLeft + (_horizontal * u) - (_vertical * v);
+    immutable of = randomDiskVec();
+
+    return Ray(_position - of, to.normalized);
   }
 
   private RGBA colorOf(const ref Ray ray, uint depth = 0) const

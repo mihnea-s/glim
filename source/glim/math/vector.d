@@ -52,7 +52,7 @@ struct Vec3
   /// The length of the vector
   auto length() const @safe nothrow
   {
-    return sqrt(pow(this.x, 2) + pow(this.y, 2) + pow(this.z, 2));
+    return sqrt(x * x + y * y + z * z);
   }
 
   /// Get a unit vector pointing in same direction
@@ -210,12 +210,10 @@ struct Vec3
       mixin("this.x" ~ op ~ "value");
       mixin("this.y" ~ op ~ "value");
       mixin("this.z" ~ op ~ "value");
-    }
-    else
-    {
-      assert(false, "unimplemented " ~ op ~ " for vec3");
+
+      return this;
     }
 
-    return this;
+    assert(false, "unimplemented " ~ op ~ " for vec3");
   }
 }

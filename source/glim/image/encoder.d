@@ -6,8 +6,8 @@ import glim.image.buffer;
 interface BufferEncoder
 {
   /// Encode the buffer into a file at `path`
-  void encodeToFile(const ref RGBABuffer buffer, const string path);
+  void encodeToFile(const RGBABuffer buffer, const string path);
 
   /// Encode the file in memory
-  ubyte[] encodeToArray(const ref RGBABuffer buffer);
+  ubyte[] encodeToArray(const RGBABuffer buffer);
 }

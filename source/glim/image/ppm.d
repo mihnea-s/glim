@@ -12,7 +12,7 @@ class PPMEncoder : BufferEncoder
 {
   static private immutable HEADER = "P3";
 
-  private void encodeToWriter(W)(const ref RGBABuffer buffer, W writer)
+  private void encodeToWriter(W)(const RGBABuffer buffer, W writer)
   {
     writer.writef("%s\n", HEADER);
     writer.writef("%d %d\n", buffer.width, buffer.height);
@@ -29,14 +29,14 @@ class PPMEncoder : BufferEncoder
   }
 
   /// Encode the buffer to `path`
-  override void encodeToFile(const ref RGBABuffer buffer, const string path)
+  override void encodeToFile(const RGBABuffer buffer, const string path)
   {
     auto f = File(path, "w");
     encodeToWriter(buffer, f);
   }
 
   /// Encode the buffer to bytes
-  override ubyte[] encodeToArray(const ref RGBABuffer buffer)
+  override ubyte[] encodeToArray(const RGBABuffer buffer)
   {
     auto buf = new OutBuffer;
     encodeToWriter(buffer, buf);

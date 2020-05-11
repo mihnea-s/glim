@@ -10,6 +10,8 @@ class CameraBuilder
   private Vec3 _lookAt;
 
   private double _vfov;
+  private double _aperture;
+  private double _focusDistance;
 
   private ulong _width;
   private ulong _height;
@@ -21,19 +23,25 @@ class CameraBuilder
   /// Create a new camera builder
   /// with default values:
   ///
-  ///  `position`     = `Vec3.zero`
-  ///  `width`        = `300`
-  ///  `height`       = `200`
-  ///  `vfov`         = `60`
-  ///  `samplesPerPx` = `1`
-  ///  `maxBounces`   = `3`
-  ///  `numThreads`   = `1`
+  ///  `position`      = `Vec3.zero`
+  ///  `lookAt`        = `Vec3.up`
+  ///  `vfov`          = `60`
+  ///  `aperture`      = `0.0`
+  ///  `focusDistance` = `1.0`
+  ///  `width`         = `300`
+  ///  `height`        = `200`
+  ///  `samplesPerPx`  = `1`
+  ///  `maxBounces`    = `3`
+  ///  `numThreads`    = `1`
   this()
   {
     _position = Vec3.zero;
     _lookAt = Vec3.up;
 
     _vfov = 60;
+    _aperture = 0.0;
+    _focusDistance = 1.0;
+
     _width = 300;
     _height = 200;
 
@@ -60,6 +68,20 @@ class CameraBuilder
   CameraBuilder vfov(double vfov) @safe nothrow
   {
     _vfov = vfov;
+    return this;
+  }
+
+  /// Set the camera's aperture
+  CameraBuilder aperture(double aperture) @safe nothrow
+  {
+    _aperture = aperture;
+    return this;
+  }
+
+  /// Set the camera's focus distance
+  CameraBuilder focusDistance(double focusDistance) @safe nothrow
+  {
+    _focusDistance = focusDistance;
     return this;
   }
 
@@ -105,7 +127,10 @@ class CameraBuilder
     return new Camera( //
         _position, //
         _lookAt, //
+
         _vfov, //
+        _aperture, //
+        _focusDistance, //
 
         _width, //
         _height, //

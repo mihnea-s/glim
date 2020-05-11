@@ -3,18 +3,35 @@ module glim.image.buffer;
 import glim.image.rgba;
 
 ///
-struct RGBABuffer
+class RGBABuffer
 {
-  /// The raw data of the buffer
-  RGBA[] data;
-
-  /// Width and height of the buffer
-  ulong width, height;
+  private RGBA[] _data;
+  private ulong _width, _height;
 
   /// Create a buffer with the given width and height
-  static RGBABuffer fromWH(ulong width, ulong height) @safe nothrow
+  this(ulong width, ulong height) @safe nothrow
   {
-    return RGBABuffer(new RGBA[width * height], width, height);
+    _data = new RGBA[width * height];
+    _width = width;
+    _height = height;
+  }
+
+  /// The raw data of the buffer
+  @property ref auto data() const @safe nothrow
+  {
+    return _data;
+  }
+
+  /// Width of the buffer
+  @property auto width() const @safe nothrow
+  {
+    return _width;
+  }
+
+  /// Height of the buffer
+  @property auto height() const @safe nothrow
+  {
+    return _height;
   }
 
   /// Get color in buffer by index
@@ -26,7 +43,7 @@ struct RGBABuffer
   /// Get color in buffer by row and column
   ref auto opIndex(ulong row, ulong col)
   {
-    assert(row < height && col < width);
-    return data[row * width + col];
+    assert(row < _height && col < _width);
+    return _data[row * _width + col];
   }
 }

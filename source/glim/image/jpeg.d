@@ -35,7 +35,7 @@ class JPEGEncoder : BufferEncoder
     writer.write(chunkCheckum);
   }
 
-  private void encodeHeader(W)(const ref RGBABuffer buffer, W writer)
+  private void encodeHeader(W)(const RGBABuffer buffer, W writer)
   {
     auto headerBytes = new ubyte[17];
     headerBytes[0 .. 4] = cast(ubyte[]) "IHDR";
@@ -54,7 +54,7 @@ class JPEGEncoder : BufferEncoder
     encodeChunk(footerBytes, writer);
   }
 
-  private ubyte[] filterScanlines(const ref RGBABuffer buf,
+  private ubyte[] filterScanlines(const RGBABuffer buf,
       const RGBA[] scanline1, const RGBA[] scanline2)
   {
     // TODO
@@ -75,7 +75,7 @@ class JPEGEncoder : BufferEncoder
     return filtered;
   }
 
-  private void encodeToWriter(W)(const ref RGBABuffer buffer, W writer)
+  private void encodeToWriter(W)(const RGBABuffer buffer, W writer)
   {
     writer.write(HEADER);
     encodeHeader(buffer, writer);
@@ -107,13 +107,13 @@ class JPEGEncoder : BufferEncoder
   }
 
   /// Encode the buffer to `path`
-  override void encodeToFile(const ref RGBABuffer buffer, const string path)
+  override void encodeToFile(const RGBABuffer buffer, const string path)
   {
     std.file.write(path, encodeToArray(buffer));
   }
 
   /// Encode the buffer to bytes
-  override ubyte[] encodeToArray(const ref RGBABuffer buffer)
+  override ubyte[] encodeToArray(const RGBABuffer buffer)
   {
     auto buf = new OutBuffer;
     encodeToWriter(buffer, buf);
