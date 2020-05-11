@@ -59,6 +59,7 @@ struct Vec3
   auto normalized() const @safe nothrow
   {
     immutable len = this.length;
+    assert(len != 0, "vector length is 0");
 
     return Vec3( //
         this.x / len, //
@@ -113,13 +114,13 @@ struct Vec3
     immutable k = Vec3(0, 0, 1);
 
     assert(i.cross(j) == k);
-    assert(i.cross(k) == j);
+    assert(i.cross(k) == -j);
 
-    assert(j.cross(i) == k);
     assert(j.cross(k) == i);
+    assert(j.cross(i) == -k);
 
     assert(k.cross(i) == j);
-    assert(k.cross(j) == i);
+    assert(k.cross(j) == -i);
   }
 
   /// Reflect in regards to a normal
