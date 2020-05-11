@@ -147,7 +147,7 @@ struct Vec3
   /// Vector negation
   auto opUnary(string op)() const
   {
-    static if (op == "-")
+    static if (["-", "+"].canFind(op))
     {
       return Vec3(-this.x, -this.y, -this.z);
     }
