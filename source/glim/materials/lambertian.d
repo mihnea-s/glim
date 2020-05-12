@@ -26,7 +26,7 @@ class Lambertian : Material
       target = -target;
     }
 
-    bounce = ray.copyMedium(hit.position, target);
+    bounce = Ray(hit.position, target);
     atten = _albedo;
 
     return true;

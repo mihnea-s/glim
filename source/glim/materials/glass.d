@@ -8,13 +8,19 @@ import glim.materials.material;
 class Glass : Material
 {
   private RGBA _albedo;
-  private bool _enableShlick;
+  private bool _specularReflection;
+  private double _outsideIndex;
   private double _refractiveIndex;
 
-  this(RGBA albedo, double refractiveIndex, bool enableShlick = true)
+  /// The refractive index of air
+  static immutable AIR_REFRACTIVE_INDEX = 1.0;
+
+  this(RGBA albedo, double refractiveIndex,
+      double outsideIndex = AIR_REFRACTIVE_INDEX, bool specularReflection = true)
   {
     _albedo = albedo;
-    _enableShlick = enableShlick;
+    _specularReflection = specularReflection;
+    _outsideIndex = outsideIndex;
     _refractiveIndex = refractiveIndex;
   }
 
@@ -37,8 +43,8 @@ class Glass : Material
     immutable frontHit = ray.direction.dot(hit.normal) <= 0;
 
     immutable etaQuot = frontHit //
-     ? ray.refractiveIndex / _refractiveIndex //
-     : _refractiveIndex / ray.refractiveIndex //
+     ? _outsideIndex / _refractiveIndex //
+     : _refractiveIndex / _outsideIndex //
     ;
 
     immutable dirNorm = ray.direction.normalized;
@@ -48,19 +54,19 @@ class Glass : Material
     immutable sinTheta = sqrt(1.0 - pow(cosTheta, 2));
 
     immutable shouldReflect = etaQuot * sinTheta > 1.0 //
-     || (_enableShlick
+     || (_specularReflection
         && uniform(0.0, 1.0) < schlick(cosTheta, etaQuot)) //
     ;
 
     if (shouldReflect)
     {
       immutable refl = dirNorm.reflect(rayFacingNorm);
-      bounce = ray.copyMedium(hit.position, refl);
+      bounce = Ray(hit.position, refl);
     }
     else
     {
       immutable refr = dirNorm.refract(rayFacingNorm, etaQuot);
-      bounce = Ray(hit.position, refr, _refractiveIndex);
+      bounce = Ray(hit.position, refr);
     }
 
     return true;

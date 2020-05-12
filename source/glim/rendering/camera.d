@@ -131,7 +131,7 @@ class Camera
     // Target vector on virtual film plane
     immutable to = _planeTopLeft + (_planeHorizontal * u) - (_planeVertical * v);
 
-    return Ray(_position + offset, (to - offset).normalized, AIR_REFRACTIVE_INDEX);
+    return Ray(_position + offset, (to - offset).normalized);
   }
 
   private RGBA colorOf(const ref Ray ray, uint depth = 0) const
@@ -148,7 +148,7 @@ class Camera
     // Check if we hit anything
     if (_renderWorld.raycast(ray, MIN_TRESH, double.infinity, hit))
     {
-      auto scattered = ray.copyMedium(Vec3.zero, Vec3.zero);
+      auto scattered = Ray(Vec3.zero, Vec3.zero);
       auto attenuation = RGBA.white;
 
       // Scatter the ray according to object material
