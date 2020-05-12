@@ -5,18 +5,16 @@ import glim.image;
 
 import glim.materials.material;
 
-///
 class Lambertian : Material
 {
   private RGBA _albedo;
 
-  ///
   this(RGBA albedo)
   {
     _albedo = albedo;
   }
 
-  override bool scatter(const ref Ray ray, const ref Hit hit, out RGBA atten, out Ray bounce) const @safe
+  override bool scatterRay(const ref Ray ray, const ref Hit hit, out RGBA atten, out Ray bounce) const @safe
   {
     // Random vector along unit sphere surface
     auto target = Vec3.random();
@@ -28,7 +26,7 @@ class Lambertian : Material
       target = -target;
     }
 
-    bounce = Ray(hit.position, target);
+    bounce = ray.copyMedium(hit.position, target);
     atten = _albedo;
 
     return true;

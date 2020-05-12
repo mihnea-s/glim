@@ -28,6 +28,13 @@ struct Vec3
     return Vec3(0, 1.0, 0);
   }
 
+  /// Create a unit vector pointing
+  /// in the negative z axis
+  static Vec3 forward() @safe nothrow
+  {
+    return Vec3(0, 0, -1.0);
+  }
+
   /// Create a vector with the same value
   /// for all coordinates
   static Vec3 same(double v) @safe nothrow
@@ -130,7 +137,6 @@ struct Vec3
     return this - norm * this.dot(norm) * 2.0;
   }
 
-  ///
   auto refract(const Vec3 norm, const double etaQuot) const @safe
   {
     import std.math : sqrt, pow;

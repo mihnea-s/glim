@@ -6,6 +6,5 @@ import glim.math;
 /// Abstract interface for materials
 interface Material
 {
-  ///
-  bool scatter(const ref Ray, const ref Hit, out RGBA, out Ray) const @safe;
+  bool scatterRay(const ref Ray, const ref Hit, out RGBA, out Ray) const @safe;
 }

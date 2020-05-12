@@ -2,7 +2,6 @@ module glim.image.buffer;
 
 import glim.image.rgba;
 
-///
 class RGBABuffer
 {
   private RGBA[] _data;

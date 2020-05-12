@@ -2,7 +2,6 @@ module glim.image.rgba;
 
 import glim.math.vector;
 
-///
 struct RGBA
 {
   /// RGB components
@@ -33,7 +32,6 @@ struct RGBA
     return RGBA(r, g, b, 1.0);
   }
 
-  ///
   static RGBA fromVec(const Vec3 vec) @safe nothrow
   {
     return RGBA(vec.x, vec.y, vec.z, 1.0);

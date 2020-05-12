@@ -1,11 +1,10 @@
-module glim.world.world;
+module glim.rendering.world;
 
 import glim.math;
 import glim.shapes;
 import glim.materials;
 import glim.image;
 
-///
 class World
 {
   private struct WorldObject
@@ -21,7 +20,6 @@ class World
   {
   }
 
-  ///
   bool raycast(const Ray ray, double min, double max, out Hit hit) const
   {
 
@@ -44,7 +42,6 @@ class World
     return hasHit;
   }
 
-  ///
   bool scatter(const ref Ray ray, const ref Hit hit, out RGBA atten, out Ray scattered) const
   {
     if (hit.name !in _objects)
@@ -52,10 +49,9 @@ class World
       return false;
     }
 
-    return _objects[hit.name].material.scatter(ray, hit, atten, scattered);
+    return _objects[hit.name].material.scatterRay(ray, hit, atten, scattered);
   }
 
-  ///
   auto opIndexAssign(Shape shape, const string name)
   {
     if (name !in _objects)
@@ -66,7 +62,6 @@ class World
     return _objects[name].shape = shape;
   }
 
-  ///
   auto opIndexAssign(Material material, const string name)
   {
     if (name !in _objects)

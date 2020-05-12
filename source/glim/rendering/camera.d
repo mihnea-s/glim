@@ -1,20 +1,19 @@
-module glim.camera.camera;
+module glim.rendering.camera;
 
 import std.concurrency : Tid;
 
 import glim.shapes;
 import glim.image;
 import glim.math;
-import glim.world;
+
+import glim.rendering.world;
 
 /// Camera
 class Camera
 {
   private immutable Vec3 _position;
-  private immutable Vec3 _x, _y, _z;
-  private immutable Vec3 _topLeft;
-  private immutable Vec3 _horizontal;
-  private immutable Vec3 _vertical;
+  private immutable Vec3 _basisI, _basisJ, _basisK;
+  private immutable Vec3 _planeTopLeft, _planeHorizontal, _planeVertical;
 
   private immutable double _lensRadius;
   private immutable uint _samplesPerPx;
@@ -26,43 +25,80 @@ class Camera
 
   static private immutable MIN_TRESH = 0.0001;
 
-  ///
-  this(Vec3 position, Vec3 lookAt, double vfov, double aperture, double focusDistance,
-      ulong width, ulong height, uint samplesPerPx, uint maxBounces, uint numThreads) @safe nothrow
+  /// Parameters to construct a camera
+  struct Params
+  {
+    /// Camera position
+    Vec3 position = Vec3.zero;
+
+    /// Where the camera should point to
+    Vec3 target = Vec3.forward;
+
+    /// The camera's vertical field of vision
+    double verticalFov = 30;
+
+    /// Aperture of the camera
+    double aperture = 0;
+
+    /// Distance of the focus plane from the
+    /// camera
+    double focusDistance = 1;
+
+    /// Width and height of the rendered image
+    ulong width = 600, height = 300;
+
+    /// How many samples should be used for
+    /// each pixel
+    uint samplesPerPx = 100;
+
+    /// Max amount of bounces a ray can
+    /// perform
+    uint maxBounces = 50;
+
+    /// Number of threads to be used when
+    /// rendering
+    uint numThreads = 4;
+  }
+
+  /// Create a camera from parameters
+  this(const Params params) @safe nothrow
   {
     import std.math : PI, tan;
 
-    _lensRadius = aperture / 2.0;
+    assert(params.aperture >= 0.0, "aperture is negative");
+    assert(params.focusDistance > 0.0, "focus distance is negative");
+    assert(params.verticalFov > 0, "vfov should be bigger than 0");
+    assert(params.width > 0 && params.height > 0, "height & width should be positive");
 
-    _samplesPerPx = samplesPerPx;
-    _maxBounces = maxBounces;
-    _numThreads = numThreads;
+    _lensRadius = params.aperture / 2.0;
+    _samplesPerPx = params.samplesPerPx;
+    _maxBounces = params.maxBounces;
+    _numThreads = params.numThreads;
 
-    _position = position;
+    _position = params.position;
 
-    assert(vfov > 0, "vfov should be bigger than 0");
-    immutable fovRads = vfov / 360.0 * 2.0 * PI;
-    immutable aspect = (width * 1.0) / height;
+    immutable vfov = params.verticalFov / 360.0 * 2.0 * PI;
+    immutable aspect = (params.width * 1.0) / params.height;
 
     // Vertical & horizontal
-    immutable v = 2.0 * tan(fovRads / 2.0);
+    immutable v = 2.0 * tan(vfov / 2.0);
     immutable h = aspect * v;
 
     // Camera orthonormal basis
-    _z = (position - lookAt).normalized;
-    _x = Vec3.up.cross(_z).normalized;
-    _y = _z.cross(_x).normalized;
+    _basisK = (params.position - params.target).normalized;
+    _basisI = Vec3.up.cross(_basisK).normalized;
+    _basisJ = _basisK.cross(_basisI).normalized;
 
-    _topLeft = //
-      (-_x * (h / 2.0) //
-           + _y * (v / 2.0) //
-           - _z) * focusDistance;
+    _planeTopLeft = // top left corner of the virtual plane
+      (Vec3.zero //
+           - _basisI * (h / 2.0) // half width on the x
+           + _basisJ * (v / 2.0) // half height on the y
+           - _basisK) * params.focusDistance;
 
-    _horizontal = _x * focusDistance * h;
-    _vertical = _y * focusDistance * v;
+    _planeHorizontal = _basisI * params.focusDistance * h;
+    _planeVertical = _basisJ * params.focusDistance * v;
 
-    assert(width > 0 && height > 0, "height & width should be positive");
-    _renderBuffer = new RGBABuffer(width, height);
+    _renderBuffer = new RGBABuffer(params.width, params.height);
     _renderWorld = null;
   }
 
@@ -82,7 +118,7 @@ class Camera
     immutable rY = uniform!"()"(-tresh, tresh);
 
     // Calculate offset vector using camera basis vectors
-    return _x * _lensRadius * rX - _y * _lensRadius * rY;
+    return _basisI * _lensRadius * rX - _basisJ * _lensRadius * rY;
   }
 
   private auto rayOf(double u, double v) const
@@ -93,9 +129,9 @@ class Camera
     immutable offset = dofOffsetVec();
 
     // Target vector on virtual film plane
-    immutable to = _topLeft + (_horizontal * u) - (_vertical * v);
+    immutable to = _planeTopLeft + (_planeHorizontal * u) - (_planeVertical * v);
 
-    return Ray(_position + offset, to.normalized);
+    return Ray(_position + offset, (to - offset).normalized, AIR_REFRACTIVE_INDEX);
   }
 
   private RGBA colorOf(const ref Ray ray, uint depth = 0) const
@@ -112,7 +148,7 @@ class Camera
     // Check if we hit anything
     if (_renderWorld.raycast(ray, MIN_TRESH, double.infinity, hit))
     {
-      auto scattered = Ray();
+      auto scattered = ray.copyMedium(Vec3.zero, Vec3.zero);
       auto attenuation = RGBA.white;
 
       // Scatter the ray according to object material
@@ -211,7 +247,6 @@ class Camera
     }
   }
 
-  ///
   void renderMultiThreaded(const World world)
   {
     import std.concurrency : spawn, thisTid, send, receive;
@@ -255,7 +290,6 @@ class Camera
     }
   }
 
-  ///
   void renderSingleThreaded(const World world)
   {
     _renderWorld = &world;
@@ -297,13 +331,11 @@ class Camera
 
   }
 
-  /// 
   auto encodeToArray(BufferEncoder encoder)
   {
     return encoder.encodeToArray(_renderBuffer);
   }
 
-  ///
   auto encodeToFile(BufferEncoder encoder, const string path)
   {
     return encoder.encodeToFile(_renderBuffer, path);

@@ -5,16 +5,16 @@ import glim.image;
 
 import glim.materials.material;
 
-///
 class Glass : Material
 {
   private RGBA _albedo;
+  private bool _enableShlick;
   private double _refractiveIndex;
 
-  ///
-  this(RGBA albedo, double refractiveIndex)
+  this(RGBA albedo, double refractiveIndex, bool enableShlick = true)
   {
     _albedo = albedo;
+    _enableShlick = enableShlick;
     _refractiveIndex = refractiveIndex;
   }
 
@@ -26,7 +26,7 @@ class Glass : Material
     return r0 + (1 - r0) * pow((1 - cosine), 5);
   }
 
-  override bool scatter(const ref Ray ray, const ref Hit hit, out RGBA atten, out Ray bounce) const @safe
+  override bool scatterRay(const ref Ray ray, const ref Hit hit, out RGBA atten, out Ray bounce) const @safe
   {
     import std.math : sqrt, pow;
     import std.algorithm.comparison : min;
@@ -37,8 +37,8 @@ class Glass : Material
     immutable frontHit = ray.direction.dot(hit.normal) <= 0;
 
     immutable etaQuot = frontHit //
-     ? 1.0 / _refractiveIndex //
-     : _refractiveIndex //
+     ? ray.refractiveIndex / _refractiveIndex //
+     : _refractiveIndex / ray.refractiveIndex //
     ;
 
     immutable dirNorm = ray.direction.normalized;
@@ -48,18 +48,19 @@ class Glass : Material
     immutable sinTheta = sqrt(1.0 - pow(cosTheta, 2));
 
     immutable shouldReflect = etaQuot * sinTheta > 1.0 //
-     || uniform(0.0, 1.0) < schlick(cosTheta, etaQuot) //
+     || (_enableShlick
+        && uniform(0.0, 1.0) < schlick(cosTheta, etaQuot)) //
     ;
 
     if (shouldReflect)
     {
       immutable refl = dirNorm.reflect(rayFacingNorm);
-      bounce = Ray(hit.position, refl);
+      bounce = ray.copyMedium(hit.position, refl);
     }
     else
     {
       immutable refr = dirNorm.refract(rayFacingNorm, etaQuot);
-      bounce = Ray(hit.position, refr);
+      bounce = Ray(hit.position, refr, _refractiveIndex);
     }
 
     return true;
