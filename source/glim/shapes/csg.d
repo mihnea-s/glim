@@ -2,6 +2,7 @@ module glim.shapes.csg;
 
 import std.math : pow;
 import std.typecons;
+import std.exception;
 import std.container.rbtree;
 
 import glim.math.ray;
@@ -45,9 +46,9 @@ class CSG : Shape
 
     protected alias HitActionTable = RedBlackTree!HitAction[Tuple!(HitState, HitState)];
 
-    abstract immutable(HitActionTable) getActionTable() const @safe nothrow;
+    @safe abstract immutable(HitActionTable) getActionTable() const;
 
-    private HitState getHitState(const Ray ray, const Nullable!Hit hit) const @safe nothrow
+    @safe @nogc private HitState getHitState(const Ray ray, const Nullable!Hit hit) const nothrow
     {
         // dfmt off
         return hit.isNull 
@@ -59,13 +60,13 @@ class CSG : Shape
     }
 
     /// Test sphere hit
-    override final Nullable!Hit testRay(const Ray ray, Interval interval) const @safe nothrow
+    @safe override final Nullable!Hit testRay(const Ray ray, Interval interval) const nothrow
     {
         import std.math : sqrt;
         import std.typecons : tuple;
         import std.algorithm : canFind;
 
-        immutable actionTable = getActionTable();
+        immutable actionTable = assertNotThrown(getActionTable());
 
         auto invA = interval, invB = interval;
 
@@ -125,7 +126,7 @@ class CSG : Shape
     }
 
     /// Make bounding box for CSG
-    override Nullable!AABB makeAABB() const @safe nothrow
+    @safe @nogc override Nullable!AABB makeAABB() const nothrow
     {
         return Nullable!AABB.init;
     }

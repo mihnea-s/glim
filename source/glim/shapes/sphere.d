@@ -15,7 +15,7 @@ class Sphere : Shape
     private double _radius;
 
     /// Unit sphere
-    this() @safe nothrow
+    @safe @nogc this() nothrow
     {
         _center = Vec3.zero;
         _radius = 1.0;
@@ -23,14 +23,14 @@ class Sphere : Shape
 
     /// Create a sphere situated at `center`
     /// with radius `radius`
-    this(Vec3 center, double radius) @safe nothrow
+    @safe @nogc this(Vec3 center, double radius) nothrow
     {
         _center = center;
         _radius = radius;
     }
 
     /// Test sphere hit
-    override Nullable!Hit testRay(const Ray ray, const Interval interval) const @safe nothrow
+    @safe override Nullable!Hit testRay(const Ray ray, const Interval interval) const nothrow
     {
         import std.math : sqrt;
 
@@ -74,7 +74,7 @@ class Sphere : Shape
     }
 
     /// Make bounding box for Sphere
-    override final Nullable!AABB makeAABB() const @safe nothrow
+    @safe @nogc override final Nullable!AABB makeAABB() const nothrow
     {
         return AABB(_center - Vec3.same(_radius), _center + Vec3.same(_radius)).nullable;
     }

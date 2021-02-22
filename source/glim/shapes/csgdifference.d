@@ -1,33 +1,30 @@
 module glim.shapes.csgdifference;
 
-import std.math : pow;
-import std.typecons : tuple;
+import std.typecons;
 import std.container.rbtree;
 
-import glim.math.ray;
-import glim.math.vector;
-import glim.shapes.shape;
 import glim.shapes.csg;
+import glim.shapes.shape;
 import glim.shapes.csgunion;
 
 /// Constructive Solid Geometry Difference
 class CSGDifference : CSG
 {
     /// Create CSG Difference from two shapes
-    this(Shape a, Shape b) @safe nothrow
+    @safe @nogc public this(Shape a, Shape b) nothrow
     {
         _a = a;
         _b = b;
     }
 
     /// Create CSG Difference from multiple shapes
-    this(Shape a, Shape[] subtrahends...) @safe nothrow
+    @safe public this(Shape a, Shape[] subtrahends...) nothrow
     {
         _a = a;
         _b = new CSGUnion(subtrahends);
     }
 
-    override final immutable(HitActionTable) getActionTable() const @safe nothrow
+    @safe override final immutable(HitActionTable) getActionTable() const
     {
         with (HitState) with (HitAction)
             return [

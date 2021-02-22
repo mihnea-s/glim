@@ -1,26 +1,23 @@
 module glim.shapes.csgunion;
 
-import std.math : pow;
 import std.typecons : tuple;
 import std.container.rbtree;
 
-import glim.math.ray;
-import glim.math.vector;
-import glim.shapes.shape;
 import glim.shapes.csg;
+import glim.shapes.shape;
 
 /// Constructive Solid Geometry Union
 class CSGUnion : CSG
 {
     /// Create CSG Union from two shapes
-    this(Shape a, Shape b) @safe nothrow
+    @safe @nogc this(Shape a, Shape b) nothrow
     {
         _a = a;
         _b = b;
     }
 
     /// Create CSG Union from multiple shapes
-    this(Shape[] shapes...) @safe nothrow
+    @safe this(Shape[] shapes...) nothrow
     {
         assert(shapes.length > 1);
 
@@ -35,7 +32,7 @@ class CSGUnion : CSG
         _b = shapes[$ - 1];
     }
 
-    override final immutable(HitActionTable) getActionTable() const @safe nothrow
+    @safe override final immutable(HitActionTable) getActionTable() const
     {
         with (HitState) with (HitAction)
             return [

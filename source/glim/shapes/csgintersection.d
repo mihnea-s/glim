@@ -1,28 +1,23 @@
 module glim.shapes.csgintersection;
 
-import std.math : pow;
-import std.typecons : tuple;
+import std.typecons;
 import std.container.rbtree;
 
-import glim.math.ray;
-import glim.math.vector;
-import glim.shapes.shape;
 import glim.shapes.csg;
-
-
+import glim.shapes.shape;
 
 /// Constructive Solid Geometry Intersection
 class CSGIntersection : CSG
 {
     /// Create CSG Intersection from two shapes
-    this(Shape a, Shape b) @safe nothrow
+    @safe @nogc this(Shape a, Shape b) nothrow
     {
         _a = a;
         _b = b;
     }
 
     /// Create CSG Intersection from multiple shapes
-    this(Shape[] shapes...) @safe nothrow
+    @safe this(Shape[] shapes...) nothrow
     {
         assert(shapes.length > 1);
 
@@ -37,7 +32,7 @@ class CSGIntersection : CSG
         _b = shapes[$ - 1];
     }
 
-    override final immutable(HitActionTable) getActionTable() const @safe nothrow
+    @safe override final immutable(HitActionTable) getActionTable() const
     {
         with (HitState) with (HitAction)
             return [
