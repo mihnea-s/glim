@@ -1,72 +1,81 @@
 module glim.shapes.sphere;
 
 import std.math : pow;
+import std.typecons;
 
 import glim.math.ray;
 import glim.math.vector;
+import glim.math.aabb;
 import glim.shapes.shape;
 
 /// A simple sphere
 class Sphere : Shape
 {
-  private Vec3 _center;
-  private double _radius;
+    private Vec3 _center;
+    private double _radius;
 
-  /// Unit sphere
-  this() @safe nothrow
-  {
-    _center = Vec3.zero;
-    _radius = 1.0;
-  }
-
-  /// Create a sphere situated at `center`
-  /// with radius `radius`
-  this(Vec3 center, double radius) @safe nothrow
-  {
-    _center = center;
-    _radius = radius;
-  }
-
-  /// Test sphere hit
-  override bool testRay(const Ray ray, Interval interval, out Hit hit) const @safe nothrow
-  {
-    import std.math : sqrt;
-
-    // t*t*dot(Dir, Dir) + t*dot(Dir, O - C) + dot(O - C, O - C) - R*R = 0
-    immutable a = pow(ray.direction.length, 2);
-    immutable b = ray.direction.dot(ray.origin - _center);
-    immutable c = pow((ray.origin - _center).length, 2) - pow(_radius, 2);
-
-    immutable discriminant = pow(b, 2) - a * c;
-
-    if (discriminant < 0)
+    /// Unit sphere
+    this() @safe nothrow
     {
-      return false;
+        _center = Vec3.zero;
+        _radius = 1.0;
     }
 
-    hit.t = (-b - sqrt(discriminant)) / a;
-
-    if (interval.min < hit.t && hit.t < interval.max)
+    /// Create a sphere situated at `center`
+    /// with radius `radius`
+    this(Vec3 center, double radius) @safe nothrow
     {
-      hit.position = ray.positionAt(hit.t);
-      hit.normal = (hit.position - _center).normalized;
-      return true;
+        _center = center;
+        _radius = radius;
     }
 
-    if (discriminant == 0)
+    /// Test sphere hit
+    override Nullable!Hit testRay(const Ray ray, const Interval interval) const @safe nothrow
     {
-      return false;
+        import std.math : sqrt;
+
+        // t*t*dot(Dir, Dir) + t*dot(Dir, O - C) + dot(O - C, O - C) - R*R = 0
+        immutable a = pow(ray.direction.length, 2);
+        immutable b = ray.direction.dot(ray.origin - _center);
+        immutable c = pow((ray.origin - _center).length, 2) - pow(_radius, 2);
+
+        immutable discriminant = pow(b, 2) - a * c;
+
+        if (discriminant < 0)
+        {
+            return Nullable!Hit.init;
+        }
+
+        auto hit = Hit.init;
+        hit.t = (-b - sqrt(discriminant)) / a;
+
+        if (interval.min < hit.t && hit.t < interval.max)
+        {
+            hit.position = ray.positionAt(hit.t);
+            hit.normal = (hit.position - _center).normalized;
+            return hit.nullable;
+        }
+
+        if (discriminant == 0)
+        {
+            return Nullable!Hit.init;
+        }
+
+        hit.t = (-b + sqrt(discriminant)) / a;
+
+        if (interval.min < hit.t && hit.t < interval.max)
+        {
+            hit.position = ray.positionAt(hit.t);
+            hit.normal = (hit.position - _center).normalized;
+            return hit.nullable;
+        }
+
+        return Nullable!Hit.init;
     }
 
-    hit.t = (-b + sqrt(discriminant)) / a;
-
-    if (interval.min < hit.t && hit.t < interval.max)
+    /// Make bounding box for Sphere
+    override final Nullable!AABB makeAABB() const @safe nothrow
     {
-      hit.position = ray.positionAt(hit.t);
-      hit.normal = (hit.position - _center).normalized;
-      return true;
+        return AABB(_center - Vec3.same(_radius), _center + Vec3.same(_radius)).nullable;
     }
-
-    return false;
-  }
 }

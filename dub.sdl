@@ -5,10 +5,10 @@ authors "mihnea"
 copyright "Copyright © 2020, mihnea"
 
 homepage "https://github.com/mihnea-s/glim"
-license "Unlicense"
+license "EUPL"
 
 targetType "library"
 targetPath "build"
 
-importPaths "./source/"
-sourcePaths "./source/"
+importPaths "source"
+sourcePaths "source"

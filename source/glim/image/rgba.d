@@ -2,6 +2,8 @@ module glim.image.rgba;
 
 import glim.math.vector;
 
+/// A single pixel using four floating point components
+/// representing the red, green, blue and alpha channels.
 struct RGBA
 {
   /// RGB components
@@ -32,6 +34,7 @@ struct RGBA
     return RGBA(r, g, b, 1.0);
   }
 
+  /// Create an opaque pixel from a Vec3
   static RGBA fromVec(const Vec3 vec) @safe nothrow
   {
     return RGBA(vec.x, vec.y, vec.z, 1.0);

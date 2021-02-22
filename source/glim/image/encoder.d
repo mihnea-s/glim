@@ -3,11 +3,11 @@ module glim.image.encoder;
 import glim.image.buffer;
 
 /// Interface for RGBABuffer encoders
-interface BufferEncoder
+interface BufferEncoder(Px)
 {
   /// Encode the buffer into a file at `path`
-  void encodeToFile(const RGBABuffer buffer, const string path);
+  void encodeToFile(const Buffer2D!Px buffer, const string path);
 
   /// Encode the file in memory
-  ubyte[] encodeToArray(const RGBABuffer buffer);
+  ubyte[] encodeToArray(const Buffer2D!Px buffer);
 }

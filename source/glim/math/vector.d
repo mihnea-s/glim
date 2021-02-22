@@ -137,6 +137,7 @@ struct Vec3
     return this - norm * this.dot(norm) * 2.0;
   }
 
+  /// Refract the ray using a normal
   auto refract(const Vec3 norm, const double etaQuot) const @safe
   {
     import std.math : sqrt, pow;

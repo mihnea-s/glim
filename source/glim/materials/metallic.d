@@ -5,17 +5,20 @@ import glim.image;
 
 import glim.materials.material;
 
-class Metallic : Material
+/// TODO
+public final class Metallic : Material
 {
   private RGBA _albedo;
   private double _fuzziness;
 
-  this(RGBA albedo, float fuzziness)
+  /// TODO
+  public this(RGBA albedo, float fuzziness)
   {
     _albedo = albedo;
     _fuzziness = fuzziness;
   }
 
+  /// TODO
   override bool scatterRay(const ref Ray ray, const ref Hit hit, out RGBA atten, out Ray bounce) const @safe
   {
     immutable refl = ray.direction.reflect(hit.normal);

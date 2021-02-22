@@ -1,5 +1,5 @@
 name "glimmer"
-description "Path tracer for GLTF2 scenes using glim"
+description "Renderer for GLTF using glim"
 
 authors "mihnea"
 copyright "Copyright © 2020, mihnea"
@@ -11,4 +11,4 @@ dependency "glim" version="*" path=".."
 
 targetType "executable"
 targetPath "../build"
-sourcePaths "./source/"
+sourcePaths "source"

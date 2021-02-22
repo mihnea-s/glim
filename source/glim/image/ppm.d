@@ -8,11 +8,11 @@ import glim.image.buffer;
 import glim.image.encoder;
 
 /// Encoder for PPM files
-class PPMEncoder : BufferEncoder
+class PPMEncoder : BufferEncoder!RGBA
 {
   static private immutable HEADER = "P3";
 
-  private void encodeToWriter(W)(const RGBABuffer buffer, W writer)
+  private void encodeToWriter(W)(const BufferRGBA buffer, W writer)
   {
     writer.writef("%s\n", HEADER);
     writer.writef("%d %d\n", buffer.width, buffer.height);
@@ -29,14 +29,14 @@ class PPMEncoder : BufferEncoder
   }
 
   /// Encode the buffer to `path`
-  override void encodeToFile(const RGBABuffer buffer, const string path)
+  override void encodeToFile(const BufferRGBA buffer, const string path)
   {
     auto f = File(path, "w");
     encodeToWriter(buffer, f);
   }
 
   /// Encode the buffer to bytes
-  override ubyte[] encodeToArray(const RGBABuffer buffer)
+  override ubyte[] encodeToArray(const BufferRGBA buffer)
   {
     auto buf = new OutBuffer;
     encodeToWriter(buffer, buf);

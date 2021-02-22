@@ -1,16 +1,23 @@
 module glim.image.buffer;
 
+import std.algorithm.mutation;
+
 import glim.image.rgba;
 
-class RGBABuffer
+/// 
+alias BufferRGBA = Buffer2D!RGBA;
+
+/// Storage class for an image templated using
+/// the pixel type.
+public class Buffer2D(Px)
 {
-  private RGBA[] _data;
+  private Px[] _data;
   private ulong _width, _height;
 
   /// Create a buffer with the given width and height
-  this(ulong width, ulong height) @safe nothrow
+  public this(ulong width, ulong height) @safe nothrow
   {
-    _data = new RGBA[width * height];
+    _data = new Px[width * height];
     _width = width;
     _height = height;
   }
@@ -33,16 +40,22 @@ class RGBABuffer
     return _height;
   }
 
+  /// Fill the whole buffer with one value.
+  public void fill(const Px filler) @safe nothrow
+  {
+    _data.fill(filler);
+  }
+
   /// Get color in buffer by index
   ref auto opIndex(ulong index)
   {
-    return data[index];
+    return _data[index];
   }
 
   /// Get color in buffer by row and column
-  ref auto opIndex(ulong row, ulong col)
+  ref auto opIndex(ulong row, ulong column)
   {
-    assert(row < _height && col < _width);
-    return _data[row * _width + col];
+    assert(row < _height && column < _width);
+    return _data[row * _width + column];
   }
 }

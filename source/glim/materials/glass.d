@@ -5,6 +5,7 @@ import glim.image;
 
 import glim.materials.material;
 
+/// TODO
 class Glass : Material
 {
   private RGBA _albedo;
@@ -15,7 +16,8 @@ class Glass : Material
   /// The refractive index of air
   static immutable AIR_REFRACTIVE_INDEX = 1.0;
 
-  this(RGBA albedo, double refractiveIndex,
+  /// TODO
+  public this(RGBA albedo, double refractiveIndex,
       double outsideIndex = AIR_REFRACTIVE_INDEX, bool specularReflection = true)
   {
     _albedo = albedo;
@@ -32,6 +34,7 @@ class Glass : Material
     return r0 + (1 - r0) * pow((1 - cosine), 5);
   }
 
+  /// TODO
   override bool scatterRay(const ref Ray ray, const ref Hit hit, out RGBA atten, out Ray bounce) const @safe
   {
     import std.math : sqrt, pow;
