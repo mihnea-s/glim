@@ -77,6 +77,12 @@ public class Raytracer
         this._buffer = new BufferRGBA(_camera.width, _camera.height);
     }
 
+    /// Getter for the render buffer of the raytracer
+    @property @safe @nogc auto buffer() const pure nothrow
+    {
+        return _buffer;
+    }
+
     @safe private auto computeDof() const
     {
         import std.math : sqrt, pow;
@@ -206,7 +212,7 @@ public class Raytracer
     }
 
     /// TODO
-    void renderMultiThreaded()
+    void renderMultiThreaded() nothrow
     {
         auto taskPool = new TaskPool(_numThreads);
 
@@ -220,7 +226,7 @@ public class Raytracer
     }
 
     /// TODO
-    void renderSingleThreaded()
+    @safe void renderSingleThreaded() nothrow 
     {
         foreach (ref row; 0 .. _buffer.height)
         {
@@ -229,17 +235,5 @@ public class Raytracer
                 _buffer[row, column] = sampleRowColumn(row, column);
             }
         }
-    }
-
-    /// TODO
-    auto encodeToArray(BufferEncoder!RGBA encoder)
-    {
-        return encoder.encodeToArray(_buffer);
-    }
-
-    /// TODO
-    auto encodeToFile(BufferEncoder!RGBA encoder, const string path)
-    {
-        return encoder.encodeToFile(_buffer, path);
     }
 }

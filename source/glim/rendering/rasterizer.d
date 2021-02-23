@@ -35,6 +35,12 @@ public class Rasterizer
         this._depth = new BufferDepth(_camera.width, _camera.height);
     }
 
+    /// Getter for the render buffer of the raytracer
+    @property @safe @nogc auto buffer() const pure nothrow
+    {
+        return _buffer;
+    }
+
     // Draw line between two points
     @trusted @nogc private void line(Vec2u p1, Vec2u p2, const RGBA color) nothrow
     {
@@ -90,17 +96,5 @@ public class Rasterizer
         _depth.fill(-float.infinity);
 
         triangle(Vec2u(150, 20), Vec2u(50, 180), Vec2u(250, 180), RGBA.white,);
-    }
-
-    /// TODO
-    public auto encodeToArray(BufferEncoder!RGBA encoder)
-    {
-        return encoder.encodeToArray(_buffer);
-    }
-
-    /// TODO
-    public auto encodeToFile(BufferEncoder!RGBA encoder, const string path)
-    {
-        return encoder.encodeToFile(_buffer, path);
     }
 }
