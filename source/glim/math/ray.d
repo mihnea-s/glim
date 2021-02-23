@@ -11,7 +11,7 @@ struct Interval
     double min, max;
 
     /// The length of the interval
-    auto length() const @safe nothrow
+    @safe @nogc auto length() const nothrow
     {
         return (max - min).abs;
     }
@@ -41,14 +41,14 @@ struct Ray
     /// Creates a ray starting at the
     /// origin with the given direction
     /// in air
-    static Ray originTo(Vec3 dir) @safe nothrow
+    @safe @nogc static Ray originTo(Vec3 dir) pure nothrow
     {
         return Ray(Vec3.zero, dir);
     }
 
     /// The ray's position at some
     /// point in time (t)
-    auto positionAt(double t) @safe const nothrow
+    @safe @nogc auto positionAt(double t) const pure nothrow
     {
         return origin + direction * t;
     }

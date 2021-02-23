@@ -1,7 +1,9 @@
 module glim.rendering.raytracer;
 
-import std.concurrency : Tid;
+import std.math;
+import std.range;
 import std.typecons;
+import std.parallelism;
 
 import glim.image;
 import glim.math;
@@ -29,9 +31,10 @@ public class Raytracer
     // Data used in render
     private const Camera _camera;
     private const Renderable[] _world;
-    private const uint _samplesPerPx;
-    private const uint _maxBounces;
-    private const uint _numThreads;
+    private immutable uint _samplesPerPx;
+    private immutable uint _maxBounces;
+    private immutable uint _numThreads;
+    private immutable double _gammaCorrection;
 
     // Render buffer
     private BufferRGBA _buffer;
@@ -50,6 +53,9 @@ public class Raytracer
         /// Number of threads to be used when
         /// rendering
         uint numThreads = 4;
+
+        /// Gamma correction
+        double gammaCorrection = 0.5;
     }
 
     /// Create a camera from parameters
@@ -65,12 +71,13 @@ public class Raytracer
         this._samplesPerPx = params.samplesPerPx;
         this._maxBounces = params.maxBounces;
         this._numThreads = params.numThreads;
+        this._gammaCorrection = params.gammaCorrection;
 
         // Construct buffer
         this._buffer = new BufferRGBA(_camera.width, _camera.height);
     }
 
-    private auto computeDof() const @safe
+    @safe private auto computeDof() const
     {
         import std.math : sqrt, pow;
         import std.random : uniform;
@@ -89,7 +96,7 @@ public class Raytracer
         return _camera.basisI * _camera.lensRadius * rX - _camera.basisJ * _camera.lensRadius * rY;
     }
 
-    private auto computeRay(double u, double v) const @safe
+    @safe private auto computeRay(double u, double v) const
     {
         import std.random : uniform;
 
@@ -112,7 +119,7 @@ public class Raytracer
         Material mat;
     }
 
-    private Nullable!Collision raycast(const Ray ray, Interval interval) const @trusted
+    @trusted private Nullable!Collision raycast(const Ray ray, Interval interval) const
     {
         auto collision = Nullable!Collision.init;
 
@@ -130,7 +137,7 @@ public class Raytracer
         return collision;
     }
 
-    private RGBA sampleRay(const ref Ray ray, uint depth = 0) const @trusted
+    @trusted private RGBA sampleRay(const ref Ray ray, uint depth = 0) const
     {
         // Max bounce check
         if (depth >= _maxBounces)
@@ -167,7 +174,7 @@ public class Raytracer
         return _camera.skybox.skyColor(ray.direction.normalized);
     }
 
-    private RGBA sampleRowColumn(ulong row, ulong column) const @safe
+    @safe private RGBA sampleRowColumn(ulong row, ulong column) const
     {
         double r = 0, g = 0, b = 0, a = 0;
 
@@ -187,112 +194,29 @@ public class Raytracer
             a += color.alpha;
         }
 
-        import std.math : sqrt;
-
         immutable scale = 1.0 / _samplesPerPx;
 
-        return RGBA( //
-                sqrt(scale * r), //
-                sqrt(scale * g), //
-                sqrt(scale * b), //
-                sqrt(scale * a), //
-                );
-    }
-
-    private static struct MsgRequestNextRow
-    {
-        immutable uint threadIndex;
-    }
-
-    private static struct MsgAcceptNextRow
-    {
-        immutable ulong row;
-    }
-
-    private static struct MsgCalculatedColor
-    {
-        immutable ulong row, column;
-        immutable RGBA value;
-    }
-
-    private static struct MsgFinish
-    {
-    }
-
-    private static void renderWorker(Tid parent, uint index, const typeof(this) raytracer)
-    {
         // dfmt off
-        import std.concurrency : send, receive;
-
-        // Accept MsgAcceptNextRow, calculate every color in the row
-        // then send it back in a MsgCalculatedColor repeat until a MsgFinish
-        // is encountered, then exit
-        auto finished = false;
-
-        while (!finished)
-        {
-            send(parent, MsgRequestNextRow(index));
-
-            receive(
-                (MsgFinish _) { 
-                    finished = true;
-                },
-
-                (MsgAcceptNextRow msg) {
-                    foreach (column; 0 .. raytracer._buffer.width)
-                    {
-                        immutable color = raytracer.sampleRowColumn(msg.row, column);
-                        send(parent, MsgCalculatedColor(msg.row, column, color));
-                    }
-                }
-            );
-        }
-
-        // dfmt on
+        return RGBA(
+            pow(scale * r, _gammaCorrection),
+            pow(scale * g, _gammaCorrection),
+            pow(scale * b, _gammaCorrection),
+            pow(scale * a, _gammaCorrection),
+        );
     }
 
     /// TODO
     void renderMultiThreaded()
     {
-        // dfmt off
-        import std.concurrency : spawn, thisTid, send, receive;
-        import std.algorithm.comparison : min;
+        auto taskPool = new TaskPool(_numThreads);
 
-        // Send each tile to renderWorker then MsgFinish to each one
-        auto threads = new Tid[_numThreads];
-
-        foreach (i; 0 .. _numThreads)
+        foreach (row; taskPool.parallel(iota(_buffer.height)))
         {
-            threads[i] = spawn(&renderWorker, thisTid, i, cast(immutable(typeof(this))) this);
+            foreach (column; 0 .. _buffer.width)
+            {
+                _buffer[row, column] = sampleRowColumn(row, column);
+            }
         }
-
-        ulong finished = 0, row = 0;
-
-        while (finished != _numThreads)
-        {
-            receive(
-                (MsgCalculatedColor msg) {
-                    this._buffer[msg.row, msg.column] = msg.value;
-                },
-
-                (MsgRequestNextRow req) {
-                    auto thread = threads[req.threadIndex];
-
-                    if (row >= _buffer.height)
-                    {
-                        send(thread, MsgFinish());
-                        finished++;
-                    }
-                    else
-                    {
-                        send(thread, MsgAcceptNextRow(row));
-                        row++;
-                    }
-                },
-            );
-        }
-
-        // dfmt on
     }
 
     /// TODO

@@ -26,7 +26,7 @@ public class Rasterizer
     }
 
     /// Create a new rasterizer.
-    public this(const Camera camera, const ref Params params) @safe nothrow
+    @safe public this(const Camera camera, const ref Params params) nothrow
     {
         this._camera = camera;
 
@@ -36,14 +36,14 @@ public class Rasterizer
     }
 
     // Draw line between two points
-    private void line(Vec3 p1, Vec3 p2, RGBA color)
+    @trusted @nogc private void line(Vec2u p1, Vec2u p2, const RGBA color) nothrow
     {
         immutable steep = (p1.x - p2.x).abs < (p1.y - p2.y).abs;
 
         if (steep)
         {
-            swap(p1.x, p1.y);
-            swap(p2.x, p2.y);
+            p1 = p1.transpose();
+            p2 = p2.transpose();
         }
 
         if (p1.x > p2.x)
@@ -51,9 +51,9 @@ public class Rasterizer
             swap(p1, p2);
         }
 
-        foreach (x; cast(ulong) p1.x .. cast(ulong) p2.x + 1)
+        foreach (x; p1.x .. p2.x + 1)
         {
-            const t = (x - p1.x) / (p2.x - p1.x);
+            const t = (x - p1.x * 1.0) / (p2.x - p1.x);
             const y = cast(ulong)(p1.y * (1.0 - t) + p2.y * t);
 
             if (steep)
@@ -68,7 +68,7 @@ public class Rasterizer
     }
 
     // Draw a filled triangle
-    private void triangle(Vec3 a, Vec3 b, Vec3 c, RGBA color)
+    @safe @nogc private void triangle(Vec2u a, Vec2u b, Vec2u c, RGBA color) nothrow
     {
         if (a.y > b.y)
             swap(a, b);
@@ -83,11 +83,13 @@ public class Rasterizer
     }
 
     /// TODO
-    public void render() @safe nothrow
+    @safe public void render() nothrow
     {
         // Fill buffers
         _buffer.fill(_camera.skybox.skyColor(Vec3.zero));
         _depth.fill(-float.infinity);
+
+        triangle(Vec2u(150, 20), Vec2u(50, 180), Vec2u(250, 180), RGBA.white,);
     }
 
     /// TODO

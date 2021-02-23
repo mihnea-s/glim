@@ -9,9 +9,9 @@ import glim.math.aabb;
 /// from this interface
 interface Shape
 {
-  /// Test if the shape is hit by a ray
-  @safe Nullable!Hit testRay(const Ray, Interval) const nothrow;
+    /// Test if the shape is hit by a ray
+    @safe Nullable!Hit testRay(const Ray, Interval) const nothrow;
 
-  /// Create a bounding box holding this shape
-  @safe Nullable!AABB makeAABB() const nothrow;
+    /// Create a bounding box holding this shape
+    @safe Nullable!AABB makeAABB() const nothrow;
 }

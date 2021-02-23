@@ -6,75 +6,75 @@ import glim.math.vector;
 /// representing the red, green, blue and alpha channels.
 struct RGBA
 {
-  /// RGB components
-  float red, green, blue, alpha;
+    /// RGB components
+    float red, green, blue, alpha;
 
-  /// Black color
-  static RGBA black() @safe nothrow
-  {
-    return RGBA.same(0.0);
-  }
-
-  /// White color
-  static RGBA white() @safe nothrow
-  {
-    return RGBA.same(1.0);
-  }
-
-  /// Create an RGBA value with the same value
-  /// in every component and maximum alpha
-  static RGBA same(double value) @safe nothrow
-  {
-    return RGBA(value, value, value, 1.0);
-  }
-
-  /// Create an RGBA value with maximum opacity
-  static RGBA opaque(double r, double g, double b) @safe nothrow
-  {
-    return RGBA(r, g, b, 1.0);
-  }
-
-  /// Create an opaque pixel from a Vec3
-  static RGBA fromVec(const Vec3 vec) @safe nothrow
-  {
-    return RGBA(vec.x, vec.y, vec.z, 1.0);
-  }
-
-  /// Attenuate this color with some other color
-  auto attenuate(const RGBA other) const @safe nothrow
-  {
-    return RGBA( //
-        this.red * other.red, //
-        this.green * other.green, //
-        this.blue * other.blue, //
-        this.alpha * other.alpha, //
-        );
-  }
-
-  /// Lerp between two colors
-  auto lerp(const RGBA other, double t) const @safe nothrow
-  {
-    if (t == 0.0)
+    /// Black color
+    @safe @nogc static RGBA black() pure nothrow
     {
-      return this;
-    }
-    else if (t == 1.0)
-    {
-      return other;
+        return RGBA.same(0.0);
     }
 
-    return RGBA( //
-        this.red + t * (other.red - this.red), //
-        this.green + t * (other.green - this.green), //
-        this.blue + t * (other.blue - this.blue), //
-        this.alpha + t * (other.alpha - this.alpha), //
-        );
-  }
+    /// White color
+    @safe @nogc static RGBA white() pure nothrow
+    {
+        return RGBA.same(1.0);
+    }
 
-  @safe nothrow unittest
-  {
-    immutable a = RGBA.white;
-    immutable b = RGBA.black;
-    assert(a.lerp(b, 0.5) == RGBA.same(0.5));
-  }
+    /// Create an RGBA value with the same value
+    /// in every component and maximum alpha
+    @safe @nogc static RGBA same(double value) pure nothrow
+    {
+        return RGBA(value, value, value, 1.0);
+    }
+
+    /// Create an RGBA value with maximum opacity
+    @safe @nogc static RGBA opaque(double r, double g, double b) pure nothrow
+    {
+        return RGBA(r, g, b, 1.0);
+    }
+
+    /// Create an opaque pixel from a Vec3
+    @safe @nogc static RGBA fromVec(const Vec3 vec) pure nothrow
+    {
+        return RGBA(vec.x, vec.y, vec.z, 1.0);
+    }
+
+    /// Attenuate this color with some other color
+    @safe @nogc auto attenuate(const RGBA other) const pure nothrow
+    {
+        return RGBA( //
+                this.red * other.red, //
+                this.green * other.green, //
+                this.blue * other.blue, //
+                this.alpha * other.alpha, //
+                );
+    }
+
+    /// Lerp between two colors
+    @safe @nogc auto lerp(const RGBA other, double t) const pure nothrow
+    {
+        if (t == 0.0)
+        {
+            return this;
+        }
+        else if (t == 1.0)
+        {
+            return other;
+        }
+
+        return RGBA( //
+                this.red + t * (other.red - this.red), //
+                this.green + t * (other.green - this.green), //
+                this.blue + t * (other.blue - this.blue), //
+                this.alpha + t * (other.alpha - this.alpha), //
+                );
+    }
+
+    @safe nothrow unittest
+    {
+        immutable a = RGBA.white;
+        immutable b = RGBA.black;
+        assert(a.lerp(b, 0.5) == RGBA.same(0.5));
+    }
 }

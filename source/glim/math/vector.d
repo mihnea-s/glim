@@ -86,10 +86,38 @@ struct Vector(int N, T)
         }
 
         /// Create a unit vector pointing
+        /// in the negative y axis
+        @safe @nogc static auto down() pure nothrow
+        {
+            return -ThisVector.up;
+        }
+
+        /// Create a unit vector pointing
         /// in the negative z axis
         @safe @nogc static auto forward() pure nothrow
         {
             return ThisVector(0, 0, -1);
+        }
+
+        /// Create a unit vector pointing
+        /// in the positive z axis
+        @safe @nogc static auto backward() pure nothrow
+        {
+            return -ThisVector.forward;
+        }
+
+        /// Create a unit vector pointing
+        /// in the positive x axis
+        @safe @nogc static auto right() pure nothrow
+        {
+            return ThisVector(1, 0, 0);
+        }
+
+        /// Create a unit vector pointing
+        /// in the negative x axis
+        @safe @nogc static auto left() pure nothrow
+        {
+            return -ThisVector.right;
         }
 
         /// Create a random vector along the
@@ -135,6 +163,26 @@ struct Vector(int N, T)
             assert(k.cross(i) == j);
             assert(k.cross(j) == -i);
         }
+    }
+
+    /// The sum of the components of the vector
+    @safe @nogc auto sum() const pure nothrow
+    {
+        static if (isFloatingPoint!T)
+        {
+            auto sum = 0.0;
+        }
+        else
+        {
+            auto sum = T.init;
+        }
+
+        static foreach (comp; _Components)
+        {
+            sum += mixin(comp);
+        }
+
+        return sum;
     }
 
     static if (isFloatingPoint!T)
@@ -238,11 +286,11 @@ struct Vector(int N, T)
     }
 
     /// Vector negation
-    auto opUnary(string op)() const
+    @safe @nogc auto opUnary(string op)() const pure nothrow
     {
         static if (!["-", "+"].canFind(op))
         {
-            assert(false, "unimplemented operator " ~ op ~ " for vec3");
+            static assert(false, "unimplemented operator " ~ op ~ " for vec3");
         }
 
         auto vec = ThisVector();
@@ -257,11 +305,11 @@ struct Vector(int N, T)
     }
 
     /// Operations between two vectors
-    auto opBinary(string op, R)(const Vector!(N, R) rhs) const
+    @safe @nogc auto opBinary(string op, R)(const Vector!(N, R) rhs) const pure nothrow
     {
         static if (!["+", "-", "/", "*"].canFind(op))
         {
-            assert(false, "unimplemented operator " ~ op ~ " for vector");
+            static assert(false, "unimplemented operator " ~ op ~ " for vector");
         }
 
         auto vec = ThisVector();
@@ -276,11 +324,11 @@ struct Vector(int N, T)
     }
 
     /// Operations between a vector and a scalar value
-    auto opBinary(string op)(const double rhs) const
+    @safe @nogc auto opBinary(string op)(const double rhs) const pure nothrow
     {
         static if (!["*", "/"].canFind(op))
         {
-            assert(false, "unimplemented operator " ~ op ~ " for vector");
+            static assert(false, "unimplemented operator " ~ op ~ " for vector");
         }
 
         auto vec = ThisVector();
@@ -295,11 +343,11 @@ struct Vector(int N, T)
     }
 
     /// Operator assignment of a vector
-    auto opOpAssign(string op, R)(const Vector!(N, R) value)
+    @safe @nogc auto opOpAssign(string op, R)(const Vector!(N, R) value) nothrow
     {
         static if (!["+=", "-=", "/=", "*="].canFind(op))
         {
-            assert(false, "unimplemented " ~ op ~ " for vector");
+            static assert(false, "unimplemented " ~ op ~ " for vector");
         }
 
         static foreach (comp; _Components)
@@ -312,11 +360,11 @@ struct Vector(int N, T)
     }
 
     /// Operator assignment of a scalar value
-    auto opOpAssign(string op)(double value)
+    @safe @nogc auto opOpAssign(string op)(double value) nothrow
     {
         static if (!["/=", "*="].canFind(op))
         {
-            assert(false, "unimplemented " ~ op ~ " for vector");
+            static assert(false, "unimplemented " ~ op ~ " for vector");
         }
 
         static foreach (comp; _Components)
@@ -329,7 +377,7 @@ struct Vector(int N, T)
     }
 
     /// Check equality of vectors of the same size
-    bool opEquals(R)(const Vector!(N, R) other) const pure nothrow @safe @nogc
+    @safe @nogc bool opEquals(R)(const Vector!(N, R) other) const pure nothrow
     {
         static foreach (comp; _Components)
         {
@@ -343,7 +391,7 @@ struct Vector(int N, T)
     }
 
     /// Calculate hash
-    auto toHash() const pure nothrow @safe @nogc
+    @safe @nogc ulong toHash() const pure nothrow
     {
         auto hash = 0uL;
 
