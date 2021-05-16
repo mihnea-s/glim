@@ -102,9 +102,9 @@ public final class CubemapSkybox : Skybox
     @trusted private RGBA sampleImage(ulong index, const ref Vec3 direction) const nothrow
     {
         immutable invLen = 1.0 / direction.dot(IMAGE_DIRECTIONS[index]);
-        immutable uv = squishVector(IMAGE_DIRECTIONS[index], direction) * invLen;
-        immutable u = cast(ulong)(_images[index].width * clamp((uv.x + 1.0) / 2.0, 0.0, 1.0));
-        immutable v = cast(ulong)(_images[index].height * clamp((uv.y + 1.0) / 2.0, 0.0, 1.0));
+        immutable uv = (squishVector(IMAGE_DIRECTIONS[index], direction) * invLen + Vec2.same(1.0)) / 2.0;
+        immutable u = cast(ulong)(_images[index].width * clamp(uv.x, 0.0, 1.0));
+        immutable v = cast(ulong)(_images[index].height * clamp(uv.y, 0.0, 1.0));
         return _images[index][u, v];
     }
 
