@@ -32,25 +32,34 @@ class CSGUnion : CSG
         _b = shapes[$ - 1];
     }
 
-    @safe override final immutable(HitActionTable) getActionTable() const
+    @safe override final ushort getActions(const ubyte state) const nothrow
     {
-        with (HitState) with (HitAction)
-            return [
 
-                // A is Entered
-                tuple(Entered, Entered): redBlackTree(ReturnAIfCloser, ReturnBIfCloser),
-                tuple(Entered, Exited): redBlackTree(ReturnBIfCloser, AdvanceAAndLoop),
-                tuple(Entered, Missed): redBlackTree(ReturnA),
+        final switch (state) with (HitState) with (HitAction)
+        {
+            // A is Entered
+        case AEntered | BEntered:
+            return ReturnAIfCloser | ReturnBIfCloser;
+        case AEntered | BExited:
+            return ReturnBIfCloser | AdvanceAAndLoop;
+        case AEntered | BMissed:
+            return ReturnA;
 
-                // A is Exited
-                tuple(Exited, Entered): redBlackTree(ReturnAIfCloser, AdvanceBAndLoop),
-                tuple(Exited, Exited): redBlackTree(ReturnAIfFarther, ReturnBIfFarther),
-                tuple(Exited, Missed): redBlackTree(ReturnA),
+            // A is Exited
+        case AExited | BEntered:
+            return ReturnAIfCloser | AdvanceBAndLoop;
+        case AExited | BExited:
+            return ReturnAIfFarther | ReturnBIfFarther;
+        case AExited | BMissed:
+            return ReturnA;
 
-                // A is Missed
-                tuple(Missed, Entered): redBlackTree(ReturnB),
-                tuple(Missed, Exited): redBlackTree(ReturnB),
-                tuple(Missed, Missed): redBlackTree(ReturnMiss),
-            ];
+            // A is Missed
+        case AMissed | BEntered:
+            return ReturnB;
+        case AMissed | BExited:
+            return ReturnB;
+        case AMissed | BMissed:
+            return ReturnMiss;
+        }
     }
 }

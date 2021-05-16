@@ -1,8 +1,5 @@
 module glim.shapes.csgdifference;
 
-import std.typecons;
-import std.container.rbtree;
-
 import glim.shapes.csg;
 import glim.shapes.shape;
 import glim.shapes.csgunion;
@@ -24,25 +21,33 @@ class CSGDifference : CSG
         _b = new CSGUnion(subtrahends);
     }
 
-    @safe override final immutable(HitActionTable) getActionTable() const
+    @safe override final ushort getActions(const ubyte state) const nothrow
     {
-        with (HitState) with (HitAction)
-            return [
+        final switch (state) with (HitState) with (HitAction)
+        {
+            // A is Entered
+        case AEntered | BEntered:
+            return ReturnAIfCloser | AdvanceBAndLoop;
+        case AEntered | BExited:
+            return ReturnAIfFarther | AdvanceAAndLoop;
+        case AEntered | BMissed:
+            return ReturnA;
 
-                // A is Entered
-                tuple(Entered, Entered): redBlackTree(ReturnAIfCloser, AdvanceBAndLoop),
-                tuple(Entered, Exited): redBlackTree(ReturnAIfFarther, AdvanceAAndLoop),
-                tuple(Entered, Missed): redBlackTree(ReturnA),
+            // A is Exited
+        case AExited | BEntered:
+            return ReturnAIfCloser | ReturnBIfCloser | FlipB;
+        case AExited | BExited:
+            return ReturnBIfCloser | AdvanceAAndLoop;
+        case AExited | BMissed:
+            return ReturnA;
 
-                // A is Exited
-                tuple(Exited, Entered): redBlackTree(ReturnAIfCloser, ReturnBIfCloser, FlipB),
-                tuple(Exited, Exited): redBlackTree(ReturnBIfCloser, AdvanceAAndLoop),
-                tuple(Exited, Missed): redBlackTree(ReturnA),
-
-                // A is Missed
-                tuple(Missed, Entered): redBlackTree(ReturnMiss),
-                tuple(Missed, Exited): redBlackTree(ReturnMiss),
-                tuple(Missed, Missed): redBlackTree(ReturnMiss),
-            ];
+            // A is Missed
+        case AMissed | BEntered:
+            return ReturnMiss;
+        case AMissed | BExited:
+            return ReturnMiss;
+        case AMissed | BMissed:
+            return ReturnMiss;
+        }
     }
 }

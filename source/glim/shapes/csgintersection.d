@@ -1,8 +1,5 @@
 module glim.shapes.csgintersection;
 
-import std.typecons;
-import std.container.rbtree;
-
 import glim.shapes.csg;
 import glim.shapes.shape;
 
@@ -32,25 +29,33 @@ class CSGIntersection : CSG
         _b = shapes[$ - 1];
     }
 
-    @safe override final immutable(HitActionTable) getActionTable() const
+    @safe override final ushort getActions(const ubyte state) const nothrow
     {
-        with (HitState) with (HitAction)
-            return [
 
-                // A is Entered
-                tuple(Entered, Entered): redBlackTree(ReturnAIfFarther, ReturnBIfFarther),
-                tuple(Entered, Exited): redBlackTree(ReturnAIfCloser, AdvanceBAndLoop),
-                tuple(Entered, Missed): redBlackTree(ReturnMiss),
+        final switch (state) with (HitState) with (HitAction)
+        {
+        case AEntered | BEntered:
+            return ReturnAIfFarther | ReturnBIfFarther;
+        case AEntered | BExited:
+            return ReturnAIfCloser | AdvanceBAndLoop;
+        case AEntered | BMissed:
+            return ReturnMiss;
 
-                // A is Exited
-                tuple(Exited, Entered): redBlackTree(ReturnBIfCloser, AdvanceAAndLoop),
-                tuple(Exited, Exited): redBlackTree(ReturnAIfCloser, ReturnBIfCloser),
-                tuple(Exited, Missed): redBlackTree(ReturnMiss),
+            // A is Exited
+        case AExited | BEntered:
+            return ReturnBIfCloser | AdvanceAAndLoop;
+        case AExited | BExited:
+            return ReturnAIfCloser | ReturnBIfCloser;
+        case AExited | BMissed:
+            return ReturnMiss;
 
-                // A is Missed
-                tuple(Missed, Entered): redBlackTree(ReturnMiss),
-                tuple(Missed, Exited): redBlackTree(ReturnMiss),
-                tuple(Missed, Missed): redBlackTree(ReturnMiss),
-            ];
+            // A is Missed
+        case AMissed | BEntered:
+            return ReturnMiss;
+        case AMissed | BExited:
+            return ReturnMiss;
+        case AMissed | BMissed:
+            return ReturnMiss;
+        }
     }
 }

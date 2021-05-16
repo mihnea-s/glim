@@ -3,7 +3,6 @@ module glim.shapes.csg;
 import std.math : pow;
 import std.typecons;
 import std.exception;
-import std.container.rbtree;
 
 import glim.math.ray;
 import glim.math.vector;
@@ -20,81 +19,82 @@ class CSG : Shape
     // The amount to advance the ray upon a hit.
     private static immutable ADVANCE_AMOUNT = 0.001;
 
-    protected enum HitState
+    protected enum HitState : ubyte
     {
-        Missed,
-        Entered,
-        Exited,
+        AMissed = 1 << 0,
+        AEntered = 1 << 1,
+        AExited = 1 << 2,
+
+        BMissed = 1 << 3,
+        BEntered = 1 << 4,
+        BExited = 1 << 5,
     }
 
-    protected enum HitAction
+    protected enum HitAction : ushort
     {
-        ReturnA,
-        ReturnAIfCloser,
-        ReturnAIfFarther,
+        ReturnA = 1 << 0,
+        ReturnAIfCloser = 1 << 1,
+        ReturnAIfFarther = 1 << 2,
 
-        ReturnB,
-        ReturnBIfCloser,
-        ReturnBIfFarther,
+        ReturnB = 1 << 3,
+        ReturnBIfCloser = 1 << 4,
+        ReturnBIfFarther = 1 << 5,
 
-        AdvanceAAndLoop,
-        AdvanceBAndLoop,
+        AdvanceAAndLoop = 1 << 6,
+        AdvanceBAndLoop = 1 << 7,
 
-        FlipB,
-        ReturnMiss,
+        FlipB = 1 << 8,
+        ReturnMiss = 1 << 9,
     }
 
-    protected alias HitActionTable = RedBlackTree!HitAction[Tuple!(HitState, HitState)];
+    @safe abstract ushort getActions(const ubyte) const nothrow;
 
-    @safe abstract immutable(HitActionTable) getActionTable() const;
-
-    @safe @nogc private HitState getHitState(const Ray ray, const Nullable!Hit hit) const nothrow
+    @safe @nogc private HitState getHitState(const Ray ray,
+            const Nullable!Hit hitA, const Nullable!Hit hitB) const nothrow
     {
         // dfmt off
-        return hit.isNull 
-                ? ray.direction.dot(hit.get.normal) <= 0
-                    ? HitState.Entered 
-                    : HitState.Exited
-                : HitState.Missed;
+        immutable stateA = (!hitA.isNull)
+                            ? ray.direction.dot(hitA.get.normal) <= 0
+                                ? HitState.AEntered 
+                                : HitState.AExited
+                            : HitState.AMissed;
+
+        immutable stateB = (!hitB.isNull)
+                            ? ray.direction.dot(hitB.get.normal) <= 0
+                                ? HitState.BEntered 
+                                : HitState.BExited
+                            : HitState.BMissed;
         // dfmt on
+
+        return stateA | stateB;
     }
 
     /// Test sphere hit
     @safe override final Nullable!Hit testRay(const Ray ray, Interval interval) const nothrow
     {
-        import std.math : sqrt;
-        import std.typecons : tuple;
-        import std.algorithm : canFind;
-
-        immutable actionTable = assertNotThrown(getActionTable());
-
         auto invA = interval, invB = interval;
-
-        auto hitA = _a.testRay(ray, invA);
-        auto hitB = _b.testRay(ray, invB);
-
-        auto stateA = getHitState(ray, hitA);
-        auto stateB = getHitState(ray, hitB);
+        auto hitA = _a.testRay(ray, invA), hitB = _b.testRay(ray, invB);
 
         while (true)
         {
             // dfmt off
-            immutable actions = actionTable[tuple(stateA, stateB)];
+            immutable state = getHitState(ray, hitA, hitB);
+            immutable actions = getActions(state);
 
             // Actions returning A
-            if (HitAction.ReturnA in actions
-                 || (HitAction.ReturnAIfCloser in actions && hitA.get.t <= hitB.get.t)
-                 || (HitAction.ReturnAIfFarther in actions && hitA.get.t > hitB.get.t))
+            if (HitAction.ReturnA & actions
+                 || ((HitAction.ReturnAIfCloser & actions) && hitA.get.t <= hitB.get.t)
+                 || ((HitAction.ReturnAIfFarther & actions) && hitA.get.t > hitB.get.t))
                 {
                 return hitA;
             }
             // Actions returning B
-            else if (HitAction.ReturnB in actions
-                 || (HitAction.ReturnBIfCloser in actions && hitB.get.t <= hitA.get.t)
-                 || (HitAction.ReturnBIfFarther in actions && hitB.get.t > hitA.get.t))
+            else if (HitAction.ReturnB & actions
+                 || ((HitAction.ReturnBIfCloser & actions) && hitB.get.t <= hitA.get.t)
+                 || ((HitAction.ReturnBIfFarther & actions) && hitB.get.t > hitA.get.t))
             {
                 // Flip B's hit normal if needed
-                if (HitAction.FlipB in actions)
+                if (HitAction.FlipB & actions)
                 {
                     hitB.get.normal = -hitB.get.normal;
                 }
@@ -102,23 +102,25 @@ class CSG : Shape
                 return hitB;
             }
             // Actions returning a miss
-            else if (HitAction.ReturnMiss in actions)
+            else if (HitAction.ReturnMiss & actions)
             {
                 return Nullable!Hit.init;
             }
             // Advance A and loop action
-            else if (HitAction.AdvanceAAndLoop in actions)
+            else if (HitAction.AdvanceAAndLoop & actions)
             {
                 invA.min = hitA.get.t + ADVANCE_AMOUNT;
                 hitA = _a.testRay(ray, invA);
-                stateA = getHitState(ray, hitA);
             }
             // Advance B and loop action
-            else if (HitAction.AdvanceBAndLoop in actions)
+            else if (HitAction.AdvanceBAndLoop & actions)
             {
                 invB.min = hitB.get.t + ADVANCE_AMOUNT;
                 hitB = _b.testRay(ray, invB);
-                stateB = getHitState(ray, hitB);
+            }
+            else 
+            {
+                assert(false, "invalid actions");
             }
 
             // dfmt on
