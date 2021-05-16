@@ -275,9 +275,9 @@ struct Vector(int N, T)
     /// Swap components of a vector
     @safe @nogc auto transpose() const pure nothrow
     {
-        auto transposed = cast(ThisVector) this;
+        ThisVector transposed = this;
 
-        static foreach (tup; zip(_Components, _Components.dup.reverse))
+        static foreach (tup; zip(_Components[0 .. $ / 2], _Components[$ / 2 .. $].dup.reverse))
         {
             swap(mixin("transposed." ~ tup[0]), mixin("transposed." ~ tup[1]));
         }
