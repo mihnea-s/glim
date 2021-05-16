@@ -95,6 +95,6 @@ public class Rasterizer
         _buffer.fill(_camera.skybox.skyColor(Vec3.zero));
         _depth.fill(-float.infinity);
 
-        triangle(Vec2u(150, 20), Vec2u(50, 180), Vec2u(250, 180), RGBA.white,);
+        triangle(Vec2u(10, 10), Vec2u(100, 30), Vec2u(190, 160), RGBA.opaque(0.5, 0.1, 0.3));
     }
 }

@@ -212,9 +212,10 @@ public class Raytracer
     }
 
     /// TODO
-    void renderMultiThreaded() nothrow
+    void renderMultiThreaded()
     {
         auto taskPool = new TaskPool(_numThreads);
+        scope (exit) taskPool.stop();
 
         foreach (row; taskPool.parallel(iota(_buffer.height)))
         {
@@ -226,7 +227,7 @@ public class Raytracer
     }
 
     /// TODO
-    @safe void renderSingleThreaded() nothrow 
+    void renderSingleThreaded() 
     {
         foreach (ref row; 0 .. _buffer.height)
         {
