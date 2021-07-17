@@ -15,10 +15,10 @@ void main()
 {
 	// Create a new world
 	const world = [
-		Renderable(new Sphere(Vec3(-1, 0, -4), 0.5), new Glass(RGBA.white, 1.54)),
-		Renderable(new Sphere(Vec3(0, 0, -4), 0.5), new Lambertian(RGBA.opaque(0.6, 0.1, 0.4)),),
-		Renderable(new Sphere(Vec3(1, 0, -4), 0.5), new Metallic(RGBA.opaque(1.0, 0.8, 0), 1.0)),
-		Renderable(new Sphere(Vec3(0, -100.5, -5), 100), new Lambertian(RGBA.opaque(0.2, 0.7, 0.3))),
+		Raytraced(new Sphere(Vec3(-1, 0, -4), 0.5), new Glass(RGBA.white, 1.54)),
+		Raytraced(new Sphere(Vec3(0, 0, -4), 0.5), new Lambertian(RGBA.opaque(0.6, 0.1, 0.4)),),
+		Raytraced(new Sphere(Vec3(1, 0, -4), 0.5), new Metallic(RGBA.opaque(1.0, 0.8, 0), 1.0)),
+		Raytraced(new Sphere(Vec3(0, -100.5, -5), 100), new Lambertian(RGBA.opaque(0.2, 0.7, 0.3))),
 	];
 
 	// Create a new camera at origin
@@ -42,5 +42,5 @@ void main()
 	tracer.renderMultiThreaded();
 
 	// Encode the camera buffer to a file
-	tracer.encodeToFile(new PNGEncoder, "eg_materials.png");
+	(new PNGEncoder).encodeToFile(tracer.buffer, "eg_materials.png");
 }

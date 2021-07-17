@@ -13,7 +13,7 @@ import glim.materials;
 import glim.rendering.camera;
 
 /// TODO: WorldObject documentation
-public struct Renderable
+public struct Raytraced
 {
     /// Shape of the object
     public Shape shape;
@@ -30,7 +30,7 @@ public class Raytracer
 
     // Data used in render
     private const Camera _camera;
-    private const Renderable[] _world;
+    private const Raytraced[] _world;
     private immutable uint _samplesPerPx;
     private immutable uint _maxBounces;
     private immutable uint _numThreads;
@@ -59,7 +59,7 @@ public class Raytracer
     }
 
     /// Create a camera from parameters
-    public this(const Camera camera, const Renderable[] world, const ref Params params) @safe nothrow
+    public this(const Camera camera, const Raytraced[] world, const ref Params params) @safe nothrow
     {
         assert(world !is null, "world to be rendered is null");
 
