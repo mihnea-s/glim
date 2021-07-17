@@ -43,12 +43,16 @@ struct RGBA
     /// Attenuate this color with some other color
     @safe @nogc auto attenuate(const RGBA other) const pure nothrow
     {
-        return RGBA( //
-                this.red * other.red, //
-                this.green * other.green, //
-                this.blue * other.blue, //
-                this.alpha * other.alpha, //
-                );
+        // dfmt off
+
+        return RGBA(
+            this.red * other.red,
+            this.green * other.green,
+            this.blue * other.blue,
+            this.alpha * other.alpha,
+        );
+
+        // dfmt on
     }
 
     /// Lerp between two colors
@@ -63,12 +67,16 @@ struct RGBA
             return other;
         }
 
-        return RGBA( //
-                this.red + t * (other.red - this.red), //
-                this.green + t * (other.green - this.green), //
-                this.blue + t * (other.blue - this.blue), //
-                this.alpha + t * (other.alpha - this.alpha), //
-                );
+        // dfmt off
+
+        return RGBA(
+            this.red + t * (other.red - this.red),
+            this.green + t * (other.green - this.green),
+            this.blue + t * (other.blue - this.blue),
+            this.alpha + t * (other.alpha - this.alpha),
+        );
+
+        // dfmt on
     }
 
     @safe nothrow unittest

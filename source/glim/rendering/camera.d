@@ -20,11 +20,14 @@ public struct Camera
     // Virtual plane
     private immutable Vec3 _planeTopLeft, _planeHorizontal, _planeVertical;
 
-    // Lens radius
-    private immutable double _lensRadius;
+    // Lens radius, vertical fov and aspect ratio
+    private immutable double _lensRadius, _vfov, _aspect;
 
     // Skybox
     private const Skybox _skybox;
+
+    // Matrices
+    private immutable Mat4 _projection, _view;
 
     private static struct Builder
     {
@@ -102,27 +105,42 @@ public struct Camera
         _position = position;
         _lensRadius = aperture / 2.0;
 
-        immutable vfov = verticalFov / 360.0 * 2.0 * PI;
-        immutable aspect = (width * 1.0) / height;
+        _vfov = verticalFov / 360.0 * 2.0 * PI;
+        _aspect = (width * 1.0) / height;
 
         // Vertical & horizontal
-        immutable v = 2.0 * tan(vfov / 2.0);
-        immutable h = aspect * v;
+        immutable v = 2.0 * tan(_vfov / 2.0);
+        immutable h = _aspect * v;
 
         // Camera orthonormal basis
-        _basisK = (position - target).normalized;
-        _basisI = Vec3.up.cross(_basisK).normalized;
-        _basisJ = _basisK.cross(_basisI).normalized;
+        _basisK = -(position - target).normalized;
+        _basisI = _basisK.cross(Vec3.up).normalized;
+        _basisJ = _basisI.cross(_basisK).normalized;
 
         _planeTopLeft = // top left corner of the virtual plane
             (Vec3.zero //
                      - _basisI * (h / 2.0) // half width on the x
                      + _basisJ * (v / 2.0) // half height on the y
-                     - _basisK) * focusDistance;
+                     + _basisK) * focusDistance;
 
         _planeHorizontal = _basisI * focusDistance * h;
         _planeVertical = _basisJ * focusDistance * v;
         _skybox = skybox;
+
+        // Compute projection matrix
+        _projection = Mat4.projection(_vfov, _aspect, focusDistance * 0.01, focusDistance * 100);
+
+        // Compute view matrix
+        immutable negPos = -_position;
+
+        // dfmt off
+        _view = Mat4([
+            _basisI.x, _basisI.y, _basisI.z, negPos.dot(_basisI),
+            _basisJ.x, _basisJ.y, _basisJ.z, negPos.dot(_basisJ),
+            _basisK.x, _basisK.y, _basisK.z, negPos.dot(_basisK),
+            0,         0,         0,         1,
+        ]);
+        // dfmt on
     }
 
     /// Create a new builder for a new camera.
@@ -195,5 +213,17 @@ public struct Camera
     @nogc public auto skybox() const pure nothrow
     {
         return _skybox;
+    }
+
+    /// Projection Matrix using this camera's settings.
+    @nogc public auto projection() const pure nothrow
+    {
+        return _projection;
+    }
+
+    /// View Matrix using this camera's settings.
+    @nogc public auto view() const pure nothrow
+    {
+        return _view;
     }
 }
