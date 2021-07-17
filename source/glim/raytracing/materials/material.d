@@ -1,4 +1,4 @@
-module glim.materials.material;
+module glim.raytracing.materials.material;
 
 import glim.image;
 import glim.math;

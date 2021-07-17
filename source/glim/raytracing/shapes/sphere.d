@@ -1,4 +1,4 @@
-module glim.shapes.sphere;
+module glim.raytracing.shapes.sphere;
 
 import std.math : pow;
 import std.typecons;
@@ -6,7 +6,7 @@ import std.typecons;
 import glim.math.ray;
 import glim.math.vector;
 import glim.math.aabb;
-import glim.shapes.shape;
+import glim.raytracing.shapes.shape;
 
 /// A simple sphere
 class Sphere : Shape

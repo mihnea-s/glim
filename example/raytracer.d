@@ -1,11 +1,13 @@
+#!/usr/bin/env dub
+
 /+ dub.sdl:
 	name "glim-example"
 	description "Glim example"
 
 	targetType "executable"
-	targetPath "../../build"
+	targetPath "../build"
 
-	dependency "glim" version="*" path="../.."
+	dependency "glim" version="*" path=".."
 +/
 
 import std;
@@ -36,11 +38,11 @@ void main()
 	};
 
 	// Create the ray tracer
-	auto tracer = new Raytracer(camera, world, rtParams);
+	auto renderer = new Raytracer(camera, world, rtParams);
 
 	// Perform a render of the world
-	tracer.renderMultiThreaded();
+	renderer.renderMultiThreaded();
 
 	// Encode the camera buffer to a file
-	(new PNGEncoder).encodeToFile(tracer.buffer, "eg_materials.png");
+	(new PNGEncoder).encodeToFile(renderer.buffer, "eg_raytrace.png");
 }

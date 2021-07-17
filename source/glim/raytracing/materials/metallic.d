@@ -1,9 +1,9 @@
-module glim.materials.metallic;
+module glim.raytracing.materials.metallic;
 
 import glim.math;
 import glim.image;
 
-import glim.materials.material;
+import glim.raytracing.materials.material;
 
 /// TODO
 public final class Metallic : Material

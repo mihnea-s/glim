@@ -1,8 +1,8 @@
-module glim.shapes.csgdifference;
+module glim.raytracing.shapes.csgdifference;
 
-import glim.shapes.csg;
-import glim.shapes.shape;
-import glim.shapes.csgunion;
+import glim.raytracing.shapes.csg;
+import glim.raytracing.shapes.shape;
+import glim.raytracing.shapes.csgunion;
 
 /// Constructive Solid Geometry Difference
 class CSGDifference : CSG

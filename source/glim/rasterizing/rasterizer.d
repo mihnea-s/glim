@@ -1,4 +1,4 @@
-module glim.rendering.rasterizer;
+module glim.rasterizing.rasterizer;
 
 import std.math;
 import std.range;
@@ -6,10 +6,11 @@ import std.algorithm;
 import std.algorithm.mutation;
 
 import glim.image;
-import glim.materials.material;
 import glim.math.vector;
 import glim.math.matrix;
 import glim.rendering.camera;
+import glim.rasterizing.meshes;
+import glim.rasterizing.shaders;
 
 // Depth / Z buffer type
 private alias BufferDepth = Buffer2D!float;
@@ -17,14 +18,14 @@ private alias BufferDepth = Buffer2D!float;
 /// Object to rasterize
 public struct Rasterized
 {
-    /// Faces of the object
-    public Vec3[3][] faces;
+    /// Mesh of the object
+    public Mesh mesh;
 
     /// Position, scale and rotation
     public Vec3[3] transform;
 
     /// Material of the object
-    public Material material;
+    public Shader shader;
 }
 
 /// How to rasterize the objects
@@ -304,10 +305,10 @@ public class Rasterizer
             immutable model = Mat4.transform(p, s, r);
             immutable mvp = model * _projView;
 
-            foreach (ref face; rastrerized.faces)
-            {
-                rasterize(face, mvp);
-            }
+            // foreach (ref face; rastrerized.faces)
+            // {
+            //     rasterize(face, mvp);
+            // }
         }
     }
 }

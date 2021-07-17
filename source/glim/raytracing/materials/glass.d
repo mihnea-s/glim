@@ -1,11 +1,11 @@
-module glim.materials.glass;
+module glim.raytracing.materials.glass;
 
 import std.typecons;
 
 import glim.math;
 import glim.image;
 
-import glim.materials.material;
+import glim.raytracing.materials.material;
 
 /// TODO
 class Glass : Material

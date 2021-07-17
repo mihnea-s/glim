@@ -1,28 +1,31 @@
-module glim.shapes.csgintersection;
+module glim.raytracing.shapes.csgunion;
 
-import glim.shapes.csg;
-import glim.shapes.shape;
+import std.typecons : tuple;
+import std.container.rbtree;
 
-/// Constructive Solid Geometry Intersection
-class CSGIntersection : CSG
+import glim.raytracing.shapes.csg;
+import glim.raytracing.shapes.shape;
+
+/// Constructive Solid Geometry Union
+class CSGUnion : CSG
 {
-    /// Create CSG Intersection from two shapes
+    /// Create CSG Union from two shapes
     @safe @nogc this(Shape a, Shape b) nothrow
     {
         _a = a;
         _b = b;
     }
 
-    /// Create CSG Intersection from multiple shapes
+    /// Create CSG Union from multiple shapes
     @safe this(Shape[] shapes...) nothrow
     {
         assert(shapes.length > 1);
 
-        auto lastShape = new CSGIntersection(shapes[0], shapes[1]);
+        auto lastShape = new CSGUnion(shapes[0], shapes[1]);
 
         foreach (shape; shapes[2 .. $ - 2])
         {
-            lastShape = new CSGIntersection(lastShape, shape);
+            lastShape = new CSGUnion(lastShape, shape);
         }
 
         _a = lastShape;
@@ -34,26 +37,27 @@ class CSGIntersection : CSG
 
         final switch (state) with (HitState) with (HitAction)
         {
+            // A is Entered
         case AEntered | BEntered:
-            return ReturnAIfFarther | ReturnBIfFarther;
+            return ReturnAIfCloser | ReturnBIfCloser;
         case AEntered | BExited:
-            return ReturnAIfCloser | AdvanceBAndLoop;
+            return ReturnBIfCloser | AdvanceAAndLoop;
         case AEntered | BMissed:
-            return ReturnMiss;
+            return ReturnA;
 
             // A is Exited
         case AExited | BEntered:
-            return ReturnBIfCloser | AdvanceAAndLoop;
+            return ReturnAIfCloser | AdvanceBAndLoop;
         case AExited | BExited:
-            return ReturnAIfCloser | ReturnBIfCloser;
+            return ReturnAIfFarther | ReturnBIfFarther;
         case AExited | BMissed:
-            return ReturnMiss;
+            return ReturnA;
 
             // A is Missed
         case AMissed | BEntered:
-            return ReturnMiss;
+            return ReturnB;
         case AMissed | BExited:
-            return ReturnMiss;
+            return ReturnB;
         case AMissed | BMissed:
             return ReturnMiss;
         }

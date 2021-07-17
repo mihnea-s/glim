@@ -1,4 +1,4 @@
-module glim.rendering.raytracer;
+module glim.raytracing.raytracer;
 
 import std.math;
 import std.range;
@@ -7,12 +7,12 @@ import std.parallelism;
 
 import glim.image;
 import glim.math;
-import glim.shapes;
-import glim.materials;
+import glim.raytracing.shapes;
+import glim.raytracing.materials;
 
 import glim.rendering.camera;
 
-/// TODO: WorldObject documentation
+/// Object shape and material to be raytraced.
 public struct Raytraced
 {
     /// Shape of the object

@@ -1,4 +1,4 @@
-module glim.shapes.csg;
+module glim.raytracing.shapes.csg;
 
 import std.math : pow;
 import std.typecons;
@@ -7,7 +7,7 @@ import std.exception;
 import glim.math.ray;
 import glim.math.vector;
 import glim.math.aabb;
-import glim.shapes.shape;
+import glim.raytracing.shapes.shape;
 
 /// Constructive Solid Geometry Base
 /// Implements http://xrt.wdfiles.com/local--files/doc%3Acsg/CSG.pdf

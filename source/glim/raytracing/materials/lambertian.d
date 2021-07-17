@@ -1,9 +1,9 @@
-module glim.materials.lambertian;
+module glim.raytracing.materials.lambertian;
 
 import glim.math;
 import glim.image;
 
-import glim.materials.material;
+import glim.raytracing.materials.material;
 
 /// TODO
 class Lambertian : Material

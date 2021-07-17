@@ -1,4 +1,4 @@
-module glim.shapes.shape;
+module glim.raytracing.shapes.shape;
 
 import std.typecons : Nullable;
 
