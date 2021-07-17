@@ -8,23 +8,23 @@ import std.algorithm;
 // 2 Dimensional general vector
 alias Vector2(T) = Vector!(2, T);
 
-// 3 Dimensional general vector
-alias Vector3(T) = Vector!(3, T);
-
-// 4 Dimensional general vector
-alias Vector4(T) = Vector!(4, T);
-
 // Specialized 2D vectors
 alias Vec2i = Vector2!int;
 alias Vec2u = Vector2!uint;
 alias Vec2f = Vector2!float;
 alias Vec2 = Vector2!double;
 
+// 3 Dimensional general vector
+alias Vector3(T) = Vector!(3, T);
+
 // Specialized 3D vectors
 alias Vec3i = Vector3!int;
 alias Vec3u = Vector3!uint;
 alias Vec3f = Vector3!float;
 alias Vec3 = Vector3!double;
+
+// 4 Dimensional general vector
+alias Vector4(T) = Vector!(4, T);
 
 // Specialized 4D vectors
 alias Vec4i = Vector4!int;
@@ -45,19 +45,19 @@ struct Vector(int N, T)
     // Compile time components
     private static immutable _Components = ["x", "y", "z", "w"].take(N);
 
-    /// The values of the vector
+    /// The values of the vector.
     static foreach (comp; _Components)
     {
         mixin("T " ~ comp ~ ";");
     }
-    /// Create a zero vector
+    /// Create a zero vector.
     @safe @nogc static auto zero() pure nothrow
     {
         return ThisVector.same(0);
     }
 
-    /// Create a unit vector
-    @safe @nogc static auto unit() pure nothrow
+    /// Create a vector with all components set to one.
+    @safe @nogc static auto one() pure nothrow
     {
         return ThisVector.same(1);
     }
@@ -138,13 +138,17 @@ struct Vector(int N, T)
         }
 
         /// Cross product
-        @safe @nogc auto cross(const Vec3 other) const pure nothrow
+        @safe @nogc auto cross(const Vector3!T other) const pure nothrow
         {
-            return Vec3( //
-                    this.y * other.z - this.z * other.y, //
-                    this.z * other.x - this.x * other.z, //
-                    this.x * other.y - this.y * other.x, //
-                    );
+            // dfmt off
+
+            return Vector3!T(
+                this.y * other.z - this.z * other.y,
+                this.z * other.x - this.x * other.z,
+                this.x * other.y - this.y * other.x,
+            );
+
+            // dfmt on
         }
 
         // Cross product tests
@@ -273,16 +277,16 @@ struct Vector(int N, T)
     }
 
     /// Swap components of a vector
-    @safe @nogc auto transpose() const pure nothrow
+    @safe @nogc auto reverse() const pure nothrow
     {
-        ThisVector transposed = this;
+        ThisVector reversed = this;
 
         static foreach (tup; zip(_Components[0 .. $ / 2], _Components[$ / 2 .. $].dup.reverse))
         {
-            swap(mixin("transposed." ~ tup[0]), mixin("transposed." ~ tup[1]));
+            swap(mixin("reversed." ~ tup[0]), mixin("reversed." ~ tup[1]));
         }
 
-        return transposed;
+        return reversed;
     }
 
     /// Vector negation
@@ -340,6 +344,22 @@ struct Vector(int N, T)
         }
 
         return vec;
+    }
+
+    /// Index a vector using the component index
+    @safe @nogc ref auto opIndex(size_t index) nothrow
+    {
+        assert(0 <= index && index < N);
+
+        static foreach (i; iota(N))
+        {
+            if (index == i)
+            {
+                return mixin("this." ~ ["x", "y", "z", "w"][i]);
+            }
+        }
+
+        assert(false, "unreachable");
     }
 
     /// Operator assignment of a vector
