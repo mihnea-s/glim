@@ -1,3 +1,0 @@
-- [ ] Fix Raytracer multithreading
-- [ ] Add function modifiers (@safe, @nogc, nothrow, pure) everywhere
-- [ ] Fix rasterizer triangle
