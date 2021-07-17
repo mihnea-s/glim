@@ -209,7 +209,7 @@ struct Vector(int N, T)
         {
             immutable len = this.length;
             assert(len != 0, "vector length is 0");
-            return this / len;
+            return (1 / len) * this;
         }
 
         @safe nothrow unittest
@@ -254,7 +254,7 @@ struct Vector(int N, T)
     @safe @nogc auto reflect(R)(const Vector!(N, R) norm) const pure nothrow
     {
         assert(0.98 < norm.length && norm.length < 1.02);
-        return this - norm * 2.0 * this.dot(norm);
+        return 2.0 * this.dot(norm) * (this - norm);
     }
 
     /// Refract the ray using a normal
@@ -264,8 +264,8 @@ struct Vector(int N, T)
 
         immutable cosTheta = norm.dot(-this);
 
-        immutable parallel = (this + norm * cosTheta) * etaQuot;
-        immutable perpen = norm * -sqrt(1.0 - pow(parallel.length, 2));
+        immutable parallel = etaQuot * (this + cosTheta * norm);
+        immutable perpen =  -sqrt(1.0 - pow(parallel.length, 2)) * norm;
 
         return parallel + perpen;
     }
@@ -328,9 +328,28 @@ struct Vector(int N, T)
     }
 
     /// Operations between a vector and a scalar value
-    @safe @nogc auto opBinary(string op)(const double rhs) const pure nothrow
+    @safe @nogc auto opBinary(string op)(const T rhs) const pure nothrow
     {
         static if (!["*", "/"].canFind(op))
+        {
+            static assert(false, "unimplemented operator " ~ op ~ " for vector");
+        }
+
+        auto vec = ThisVector();
+
+        static foreach (comp; _Components)
+        {
+            // e.g. vec.x = x / rhs
+            mixin("vec." ~ comp) = cast(T) mixin(comp ~ op ~ "rhs");
+        }
+
+        return vec;
+    }
+
+    /// Operations between a vector and a scalar value
+    @safe @nogc auto opBinaryRight(string op)(const T rhs) const pure nothrow
+    {
+        static if (op != "*")
         {
             static assert(false, "unimplemented operator " ~ op ~ " for vector");
         }

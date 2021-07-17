@@ -16,11 +16,11 @@ import glim;
 void main()
 {
 	// Create a new world
-	const world = [];
+	const world = cast(Rasterized[]) [];
 
 	// Create a new camera at origin
 	const camera = Camera.builder()
-		.position(-3 * Vec3.forward)
+		.position(-3.0 * Vec3.forward)
 		.target(Vec3.zero)
 		.extent(720, 720)
 		.verticalFov(60)
@@ -37,5 +37,5 @@ void main()
 	renderer.render();
 
 	// Encode the camera buffer to a file
-	(new PNGEncoder).encodeToFile(tracer.buffer, "eg_rasterize.png");
+	(new PNGEncoder).encodeToFile(renderer.buffer, "renders/ex_rasterizer.png");
 }
