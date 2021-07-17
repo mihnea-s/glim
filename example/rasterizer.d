@@ -1,8 +1,8 @@
 #!/usr/bin/env dub
 
 /+ dub.sdl:
-	name "glim-example"
-	description "Glim example"
+	name "glim-example-rasterizer"
+	description "Glim example using the Rasterizer"
 
 	targetType "executable"
 	targetPath "../build"
@@ -19,17 +19,15 @@ void main()
 	const world = [];
 
 	// Create a new camera at origin
-	const camera = Camera.builder() //
-	.position(-3 * Vec3.forward) //
-	.target(Vec3.zero) //
-	.extent(720, 720) //
-	.verticalFov(60) //
-	.build();
+	const camera = Camera.builder()
+		.position(-3 * Vec3.forward)
+		.target(Vec3.zero)
+		.extent(720, 720)
+		.verticalFov(60)
+		.build();
 
 	immutable Rasterizer.Params raParams = {
-		mode: RasterMode.Triangles, //
-
-	
+		mode: RasterMode.Triangles,
 	};
 
 	// Create the ray tracer
